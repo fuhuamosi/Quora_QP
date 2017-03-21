@@ -23,10 +23,10 @@ tf.flags.DEFINE_integer('num_epochs', 1, 'Number of epochs to train for.')
 tf.flags.DEFINE_integer('embedding_size', 300, 'Embedding size for embedding matrices.')
 tf.flags.DEFINE_string('data_dir', os.path.join('..', 'dataset'), 'Directory containing dataset')
 
-tf.flags.DEFINE_integer("evaluate_every", 1,
+tf.flags.DEFINE_integer("evaluate_every", 100,
                         "Evaluate model on dev set after this many steps (default: 100)")
-tf.flags.DEFINE_integer("eval_size", 4000, "Evaluate model on dev set's size")
-tf.flags.DEFINE_integer("checkpoint_every", 1000, "Save model after this many steps (default: 100)")
+tf.flags.DEFINE_integer("eval_size", 1000, "Evaluate model on dev set's size")
+tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
 tf.flags.DEFINE_integer("num_checkpoints", 5, "Number of checkpoints to store (default: 5)")
 
 # Misc Parameters
@@ -89,8 +89,8 @@ def dev_step(x_batch, y_batch, dev_summary_op,
         model.labels: y_batch,
         model.dropout_keep_prob: 1.0
     }
-    _, step, summaries, loss, accuracy, recall = sess.run(
-        [model.train_op, model.global_step, dev_summary_op,
+    step, summaries, loss, accuracy, recall = sess.run(
+        [model.global_step, dev_summary_op,
          model.loss_op, model.accuracy_op, model.recall_op],
         feed_dict)
     time_str = datetime.datetime.now().isoformat()
