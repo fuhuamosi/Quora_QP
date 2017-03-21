@@ -70,10 +70,24 @@ def load_data(path, need_label=True):
 def vectorize_sent(sent, word2idx: Dict, oov_size, sent_size=50):
     trim_sent = sent[:sent_size]
     dict_len = len(word2idx)
-    sent_ids = [word2idx.get(w, hash(w) % oov_size + (dict_len + 1)) for w in trim_sent]
+    sent_ids = [word2idx.get(w, hash(w) % oov_size + dict_len) for w in trim_sent]
     pad_length = sent_size - len(sent_ids)
     sent_ids.extend([PAD_ID] * pad_length)
     return sent_ids
+
+
+def vectorize_y(ys, num_class):
+    y_dis = np.zeros([len(ys), num_class], dtype=np.float32)
+    for i in range(len(ys)):
+        y_dis[i, ys[i]] = 1.0
+    return y_dis.tolist()
+
+
+def sample_eval_data(dev_x, dev_y, size):
+    x_arr = np.array(dev_x)
+    y_arr = np.array(dev_y)
+    shuffle_indices = np.random.permutation(len(dev_x))
+    return x_arr[shuffle_indices[:size]], y_arr[shuffle_indices[:size]]
 
 
 if __name__ == '__main__':
@@ -93,5 +107,4 @@ if __name__ == '__main__':
     #
     # test_ids = [[vectorize_sent(q, word2index, oov_embed_size) for q in x] for x in test_x]
     # serialize(test_ids, os.path.join(data_dir, 'test_ids.bin'))
-    test_ids = deserialize(os.path.join(data_dir, 'test_ids.bin'))
-    print(len(test_ids))
+    pass

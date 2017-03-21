@@ -12,8 +12,7 @@ class MatchLstm:
     @exe_time
     def __init__(self, vocab_size, sentence_size, embedding_size,
                  word_embedding, initializer=tf.truncated_normal_initializer(stddev=0.1),
-                 session=tf.Session(), num_class=3, dropout_keep_prob=0.5,
-                 window_size=4, name='MatchLstm', initial_lr=1e-3):
+                 num_class=3, window_size=4, name='MatchLstm', initial_lr=1e-3):
         self._vocab_size = vocab_size
         self._sentence_size = sentence_size
         self._embedding_size = embedding_size
@@ -21,18 +20,14 @@ class MatchLstm:
         self._initializer = initializer
         self._name = name
         self._num_class = num_class
-        self._sess = session
         self._window_size = window_size
         self._initial_lr = initial_lr
-        self._dropout_keep_prob = dropout_keep_prob
 
         self._build_inputs_and_vars()
 
         self._inference()
 
         self._initial_optimizer()
-
-        self._merge_summary()
 
     def _build_inputs_and_vars(self):
         self.premises = tf.placeholder(shape=[None, self._sentence_size], dtype=tf.int32,
@@ -41,6 +36,9 @@ class MatchLstm:
                                          name='hypotheses')
         self.labels = tf.placeholder(shape=[None, self._num_class], dtype=tf.float32,
                                      name='labels')
+        self.dropout_keep_prob = tf.placeholder(shape=[], dtype=tf.float32,
+                                                name='dropout_keep_prob')
+
         self._batch_size = tf.shape(self.premises)[0]
 
         self.lr = tf.get_variable(shape=[], dtype=tf.float32, trainable=False,
@@ -73,33 +71,45 @@ class MatchLstm:
                                        dtype=tf.float32)
             self.h_t = h_t
 
-        self.lstm_m = contrib.rnn.BasicLSTMCell(num_units=self._embedding_size,
-                                                forget_bias=0.0)
-        h_m_arr = tf.TensorArray(dtype=tf.float32, size=self._batch_size)
+        with tf.name_scope('{}_match_sents'.format(self._name)):
+            self.lstm_m = contrib.rnn.BasicLSTMCell(num_units=self._embedding_size,
+                                                    forget_bias=0.0)
+            h_m_arr = tf.TensorArray(dtype=tf.float32, size=self._batch_size)
 
-        i = tf.constant(0)
-        c = lambda x, y: tf.less(x, self._batch_size)
-        b = lambda x, y: self._match_sent(x, y)
-        res = tf.while_loop(cond=c, body=b, loop_vars=(i, h_m_arr))
-
-        self.h_m_tensor = tf.squeeze(res[-1].stack(), axis=[1])
+            i = tf.constant(0)
+            c = lambda x, y: tf.less(x, self._batch_size)
+            b = lambda x, y: self._match_sent(x, y)
+            res = tf.while_loop(cond=c, body=b, loop_vars=(i, h_m_arr))
+            self.h_m_tensor = tf.squeeze(res[-1].stack(), axis=[1])
 
         with tf.name_scope('dropout'):
-            self.h_drop = tf.nn.dropout(self.h_m_tensor, self._dropout_keep_prob)
+            self.h_drop = tf.nn.dropout(self.h_m_tensor, self.dropout_keep_prob)
 
         with tf.variable_scope('{}_fully_connect'.format(self._name)):
             w_fc = tf.get_variable(shape=[self._embedding_size, self._num_class],
-                                   initializer=self._initializer, name='w_fc')
-            b_fc = tf.get_variable(shape=[self._num_class],
-                                   initializer=self._initializer, name='b_fc')
+                                   initializer=contrib.layers.xavier_initializer(),
+                                   name='w_fc')
+            b_fc = tf.Variable(tf.constant(0.1, shape=[self._num_class]), name="b_fc")
             self.logits = tf.matmul(self.h_drop, w_fc) + b_fc
 
-        cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=self.labels,
-                                                                logits=self.logits,
-                                                                name='cross_entropy')
-        cross_entropy_sum = tf.reduce_sum(cross_entropy, name='cross_entropy_sum')
-        self.loss_op = tf.div(cross_entropy_sum, tf.cast(self._batch_size, dtype=tf.float32))
-        self.predict_op = tf.arg_max(self.logits, dimension=1)
+        with tf.name_scope('loss'):
+            cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=self.labels,
+                                                                    logits=self.logits,
+                                                                    name='cross_entropy')
+            self.loss_op = tf.reduce_mean(cross_entropy, name='loss_op')
+
+        # Accuracy
+        with tf.name_scope("accuracy"):
+            self.predict_op = tf.arg_max(self.logits, dimension=1, name='predict_op')
+            hard_labels = tf.argmax(self.labels, axis=1, name='hard_labels')
+            correct_predictions = tf.cast(tf.equal(self.predict_op, hard_labels), tf.float32)
+            self.accuracy_op = tf.reduce_mean(correct_predictions,
+                                              name='accuracy_op')
+            positive_cnt = tf.cast(tf.reduce_sum(hard_labels), tf.float32)
+            correct_predictions = tf.reshape(correct_predictions, [1, -1])
+            hard_labels = tf.reshape(tf.cast(hard_labels, dtype=tf.float32), [-1, 1])
+            positive_true_cnt = tf.reshape(tf.matmul(correct_predictions, hard_labels), [])
+            self.recall_op = positive_true_cnt / (positive_cnt + 1e-3)
 
     def _match_sent(self, i, h_m_arr):
         h_s_i = self.h_s[i]
@@ -134,14 +144,15 @@ class MatchLstm:
             w_e = tf.get_variable(shape=[self._embedding_size, 1],
                                   initializer=self._initializer, name='w_e')
 
-        last_m_h = state.h
-        sum_h = tf.matmul(h_s_j, w_s) + tf.matmul(h_t_k, w_t) + tf.matmul(last_m_h, w_m)
-        e_kj = tf.matmul(tf.tanh(sum_h), w_e)
-        a_kj = tf.nn.softmax(e_kj)
-        alpha_k = tf.matmul(a_kj, h_s_j, transpose_a=True)
-        alpha_k.set_shape([1, self._embedding_size])
+        with tf.variable_scope('{}_align'.format(self._name)):
+            last_m_h = state.h
+            sum_h = tf.matmul(h_s_j, w_s) + tf.matmul(h_t_k, w_t) + tf.matmul(last_m_h, w_m)
+            e_kj = tf.matmul(tf.tanh(sum_h), w_e)
+            a_kj = tf.nn.softmax(e_kj)
+            alpha_k = tf.matmul(a_kj, h_s_j, transpose_a=True)
+            alpha_k.set_shape([1, self._embedding_size])
+            m_k = tf.concat([alpha_k, h_t_k], axis=1)
 
-        m_k = tf.concat([alpha_k, h_t_k], axis=1)
         with tf.variable_scope('{}_lstm_m'.format(self._name)):
             _, new_state = self.lstm_m(inputs=m_k, state=state)
 
@@ -167,17 +178,13 @@ class MatchLstm:
         self._optimizer = tf.train.AdamOptimizer(learning_rate=self.lr, beta1=0.9, beta2=0.999)
         self.train_op = self._optimizer.minimize(self.loss_op, global_step=self.global_step)
 
-    def _merge_summary(self):
-        tf.summary.scalar('mean_loss', self.loss_op)
-        self.merge_summary_op = tf.summary.merge_all()
-
 
 if __name__ == '__main__':
     with tf.Session() as sess:
         embedding = np.random.randn(4, 6)
         embedding[0] = 0.0
         model = MatchLstm(vocab_size=7, sentence_size=5, embedding_size=6,
-                          word_embedding=embedding, session=sess)
+                          word_embedding=embedding)
         model.batch_size = 1
         sent1 = [[3, -1, 2, 1, 0],
                  [4, 5, 1, 0, 0],
