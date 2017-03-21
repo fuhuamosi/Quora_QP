@@ -70,8 +70,8 @@ def train_step(x_batch, y_batch, train_summary_op,
          model.loss_op, model.accuracy_op, model.recall_op],
         feed_dict)
     time_str = datetime.datetime.now().isoformat()
-    print("{}: step {}, loss {:g}, acc {:g}, rec {:g}".format(time_str, step,
-                                                              loss, accuracy, recall))
+    print("{}: step {}, loss {:.4f}, rec {:.4f}, acc {:.4f}".format(time_str, step,
+                                                                    loss, recall, accuracy))
     train_summary_writer.add_summary(summaries, step)
 
 
@@ -94,8 +94,8 @@ def dev_step(x_batch, y_batch, dev_summary_op,
          model.loss_op, model.accuracy_op, model.recall_op],
         feed_dict)
     time_str = datetime.datetime.now().isoformat()
-    print("{}: step {}, loss {:g}, acc {:g}, rec {:g}".format(time_str, step,
-                                                              loss, accuracy, recall))
+    print("{}: step {}, loss {:.4f}, rec {:.4f}, acc {:.4f}".format(time_str, step,
+                                                                    loss, recall, accuracy))
     dev_summary_writer.add_summary(summaries, step)
 
 
