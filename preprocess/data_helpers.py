@@ -79,7 +79,8 @@ def vectorize_sent(sent, word2idx: Dict, oov_size, sent_size=50):
 def vectorize_y(ys, num_class):
     y_dis = np.zeros([len(ys), num_class], dtype=np.float32)
     for i in range(len(ys)):
-        y_dis[i, ys[i]] = 1.0
+        y_dis[i, 1] = float(ys[i])
+        y_dis[i, 0] = 1.0 - y_dis[i, 1]
     return y_dis.tolist()
 
 
