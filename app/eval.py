@@ -13,7 +13,7 @@ from app.decorator import exe_time
 
 # Eval Parameters
 tf.flags.DEFINE_string("checkpoint_dir", os.path.join('..', 'dataset', 'runs',
-                                                      '1490166291', 'checkpoints')
+                                                      '1490110803', 'checkpoints')
                        , "Checkpoint directory from training run")
 tf.flags.DEFINE_string('data_dir', os.path.join('..', 'dataset'), 'Directory containing dataset')
 
@@ -26,7 +26,7 @@ FLAGS = tf.flags.FLAGS
 
 @exe_time
 def load_data():
-    test_ids, _ = deserialize(os.path.join(FLAGS.data_dir, 'dev_ids.bin'))
+    test_ids = deserialize(os.path.join(FLAGS.data_dir, 'test_ids.bin'))
     return test_ids
 
 
@@ -50,7 +50,6 @@ def test_step(x_batch, pre, hyp, dropout_prob, logits, sess):
     }
     scores = sess.run(logits, feed_dict)
     dup_score = cal_dup_score(scores)
-    print(dup_score)
 
 
 def batch_data(data, batch_size=1000):
