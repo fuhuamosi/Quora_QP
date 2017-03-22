@@ -9,7 +9,6 @@ import datetime
 from tensorflow.contrib import learn
 import csv
 from preprocess.file_utils import deserialize
-from preprocess.data_helpers import vectorize_y, batch_iter, sample_eval_data
 from app.decorator import exe_time
 
 # Eval Parameters
@@ -27,23 +26,23 @@ FLAGS = tf.flags.FLAGS
 
 @exe_time
 def load_data():
-    test_ids = deserialize(os.path.join(FLAGS.data_dir, 'test_ids.bin'))
+    test_ids, _ = deserialize(os.path.join(FLAGS.data_dir, 'dev_ids.bin'))
     return test_ids
 
 
-def cal_dup_score(scores):
-    exp_scores = np.exp(scores)
-    exp_scores_sum = np.sum(exp_scores)
-    return exp_scores[0, 1] / exp_scores_sum
+def cal_dup_score(x):
+    score_exp = np.exp(np.asarray(x))
+    score_softmax = score_exp / np.reshape(np.sum(score_exp, axis=1), [-1, 1])
+    return score_softmax[:, 1]
 
 
 @exe_time
-def test_step(x, pre, hyp, dropout_prob, logits, sess):
+def test_step(x_batch, pre, hyp, dropout_prob, logits, sess):
     """
     Evaluates model on a dev set
     """
-    sents1 = np.reshape(np.array(x[0]), [1, -1])
-    sents2 = np.reshape(np.array(x[1]), [1, -1])
+    sents1 = x_batch[:, 0].tolist()
+    sents2 = x_batch[:, 1].tolist()
     feed_dict = {
         pre: sents1,
         hyp: sents2,
@@ -51,8 +50,20 @@ def test_step(x, pre, hyp, dropout_prob, logits, sess):
     }
     scores = sess.run(logits, feed_dict)
     dup_score = cal_dup_score(scores)
-    dup_score = '{:.4f}'.format(dup_score)
     print(dup_score)
+
+
+def batch_data(data, batch_size=1000):
+    """
+    Generates a batch iterator for a dataset.
+    """
+    data = np.array(data)
+    data_size = len(data)
+    num_batches_per_epoch = int((len(data) - 1) / batch_size) + 1
+    for batch_num in range(num_batches_per_epoch):
+        start_index = batch_num * batch_size
+        end_index = min((batch_num + 1) * batch_size, data_size)
+        yield data[start_index:end_index]
 
 
 def main(_):
@@ -74,9 +85,8 @@ def main(_):
             dropout_keep_prob = graph.get_operation_by_name('dropout_keep_prob').outputs[0]
             logits = graph.get_operation_by_name('MatchLstm_fully_connect/add').outputs[0]
 
-            for x in test_ids:
+            for x in batch_data(test_ids):
                 test_step(x, input1, input2, dropout_keep_prob, logits, sess)
-                break
 
 
 if __name__ == '__main__':
