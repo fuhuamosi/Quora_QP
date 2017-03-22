@@ -120,7 +120,7 @@ def main(_):
                               num_class=FLAGS.num_class)
 
             timestamp = str(int(time.time()))
-            out_dir = os.path.abspath(os.path.join(FLAGS.data_dir, 'runs', timestamp))
+            out_dir = os.path.abspath(os.path.join('..', 'runs', timestamp))
             print('Writing to {}\n'.format(out_dir))
 
             loss_summary = tf.summary.scalar(name='loss', tensor=model.loss_op)
