@@ -105,9 +105,10 @@ class MatchLstm:
             correct_predictions = tf.cast(tf.equal(self.predict_op, hard_labels), tf.float32)
             self.accuracy_op = tf.reduce_mean(correct_predictions,
                                               name='accuracy_op')
-            positive_cnt = tf.cast(tf.reduce_sum(hard_labels), tf.float32)
-            correct_predictions = tf.reshape(correct_predictions, [1, -1])
+
             hard_labels = tf.reshape(tf.cast(hard_labels, dtype=tf.float32), [-1, 1])
+            positive_cnt = tf.reduce_sum(hard_labels)
+            correct_predictions = tf.reshape(correct_predictions, [1, -1])
             positive_true_cnt = tf.reshape(tf.matmul(correct_predictions, hard_labels), [])
             self.recall_op = positive_true_cnt / (positive_cnt + 1e-3)
 
