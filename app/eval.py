@@ -1,15 +1,14 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import tensorflow as tf
-import numpy as np
 import os
-import time
-import datetime
-from tensorflow.contrib import learn
+
+import numpy as np
+import tensorflow as tf
 import csv
-from preprocess.file_utils import deserialize
+
 from app.decorator import exe_time
+from preprocess.file_utils import deserialize
 
 # Eval Parameters
 tf.flags.DEFINE_string("checkpoint_dir", os.path.join('..', 'dataset', 'runs',
@@ -50,6 +49,7 @@ def test_step(x_batch, pre, hyp, dropout_prob, logits, sess):
     }
     scores = sess.run(logits, feed_dict)
     dup_score = cal_dup_score(scores)
+    return dup_score
 
 
 def batch_data(data, batch_size=1000):
@@ -62,7 +62,22 @@ def batch_data(data, batch_size=1000):
     for batch_num in range(num_batches_per_epoch):
         start_index = batch_num * batch_size
         end_index = min((batch_num + 1) * batch_size, data_size)
-        yield data[start_index:end_index]
+        yield data[start_index:end_index], end_index
+
+
+@exe_time
+def write_predictions(all_predictions):
+    with open(os.path.join(FLAGS.data_dir, 'sample_submission.csv'), 'r') as f:
+        f_csv = csv.reader(f)
+        headers = next(f_csv)
+    with open(os.path.join('..', 'submit', 'mlstm_pred.csv'), 'w') as f:
+        f_csv = csv.writer(f)
+        f_csv.writerow(headers)
+        for i, pre in enumerate(all_predictions):
+            prob = '{:g}'.format(pre)
+            f_csv.writerow([i, prob])
+            if i % 10000 == 0:
+                print('Writing {} lines...'.format(i))
 
 
 def main(_):
@@ -84,8 +99,13 @@ def main(_):
             dropout_keep_prob = graph.get_operation_by_name('dropout_keep_prob').outputs[0]
             logits = graph.get_operation_by_name('MatchLstm_fully_connect/add').outputs[0]
 
-            for x in batch_data(test_ids):
-                test_step(x, input1, input2, dropout_keep_prob, logits, sess)
+            all_predictions = np.array([])
+            for x, end_index in batch_data(test_ids):
+                batch_scores = test_step(x, input1, input2, dropout_keep_prob, logits, sess)
+                all_predictions = np.concatenate([all_predictions, batch_scores])
+                print('Predicting {} lines...'.format(end_index))
+
+            write_predictions(all_predictions)
 
 
 if __name__ == '__main__':
