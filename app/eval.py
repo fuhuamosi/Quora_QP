@@ -70,11 +70,11 @@ def write_predictions(all_predictions):
     with open(os.path.join(FLAGS.data_dir, 'sample_submission.csv'), 'r') as f:
         f_csv = csv.reader(f)
         headers = next(f_csv)
-    with open(os.path.join('..', 'submit', 'mlstm_pred.csv'), 'w') as f:
+    with open(os.path.join('..', 'submit', 'mlstm_pred.csv'), 'w', newline='') as f:
         f_csv = csv.writer(f)
         f_csv.writerow(headers)
         for i, pre in enumerate(all_predictions):
-            prob = '{:g}'.format(pre)
+            prob = '{:.3f}'.format(pre)
             f_csv.writerow([i, prob])
             if i % 10000 == 0:
                 print('Writing {} lines...'.format(i))
