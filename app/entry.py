@@ -19,7 +19,7 @@ tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (defau
 tf.flags.DEFINE_integer('batch_size', 32, 'Batch size for training.')
 tf.flags.DEFINE_integer('sent_size', 50, 'Max sentence size.')
 tf.flags.DEFINE_integer('num_class', 2, 'Max sentence size.')
-tf.flags.DEFINE_integer('num_epochs', 1, 'Number of epochs to train for.')
+tf.flags.DEFINE_integer('num_epochs', 6, 'Number of epochs to train for.')
 tf.flags.DEFINE_integer('embedding_size', 300, 'Embedding size for embedding matrices.')
 tf.flags.DEFINE_string('data_dir', os.path.join('..', 'dataset'), 'Directory containing dataset')
 
@@ -38,9 +38,9 @@ FLAGS = tf.flags.FLAGS
 
 @exe_time
 def load_data():
-    train_ids, train_y = deserialize(os.path.join(FLAGS.data_dir, 'train_ids.bin'))
+    train_ids, train_y = deserialize(os.path.join(FLAGS.data_dir, 'train_ids_0.7.bin'))
     train_y = vectorize_y(train_y, FLAGS.num_class)
-    dev_ids, dev_y = deserialize(os.path.join(FLAGS.data_dir, 'dev_ids.bin'))
+    dev_ids, dev_y = deserialize(os.path.join(FLAGS.data_dir, 'dev_ids_0.7.bin'))
     dev_y = vectorize_y(dev_y, FLAGS.num_class)
     return train_ids, train_y, dev_ids, dev_y
 
