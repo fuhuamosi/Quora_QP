@@ -3,6 +3,7 @@
 
 # longest common sequence match
 
+
 def get_word_inv(seq):
     word_inv_dict = {}
     for i in range(len(seq) - 1, -1, -1):

@@ -92,11 +92,27 @@ def sample_eval_data(dev_x, dev_y, size):
     return x_arr[shuffle_indices[:size]], y_arr[shuffle_indices[:size]]
 
 
-def transform_y(train_x, train_y, alpha):
-    for index in range(len(train_y)):
-        lcs_ratio = get_lcs_ratio(*train_x[index])
-        train_y[index] = alpha * train_y[index] + (1 - alpha) * lcs_ratio
-    return train_y
+def transform_y(x, y, alpha):
+    for index in range(len(y)):
+        lcs_ratio = get_lcs_ratio(*x[index])
+        y[index] = alpha * y[index] + (1 - alpha) * lcs_ratio
+    return y
+
+
+def transform_x(x):
+    x_new = []
+    for sent1, sent2 in x:
+        word_set1 = set(sent1)
+        word_set2 = set(sent2)
+        common_word_set = word_set1 & word_set2
+        sent1_new = list(filter(lambda w: w not in common_word_set, sent1))
+        sent2_new = list(filter(lambda w: w not in common_word_set, sent2))
+        if len(sent1_new) == 0:
+            sent1_new.append('?')
+        if len(sent2_new) == 0:
+            sent2_new.append('?')
+        x_new.append([sent1_new, sent2_new])
+    return x_new
 
 
 def main():
@@ -109,16 +125,20 @@ def main():
 
     alpha = 0.7
 
-    train_ids = [[vectorize_sent(q, word2index, oov_embed_size) for q in x] for x in train_x]
     train_y = transform_y(train_x, train_y, alpha)
-    serialize([train_ids, train_y], os.path.join(data_dir, 'train_ids_{}.bin'.format(alpha)))
+    train_x = transform_x(train_x)
+    train_ids = [[vectorize_sent(q, word2index, oov_embed_size) for q in x] for x in train_x]
+    serialize([train_ids, train_y], os.path.join(data_dir, 'train_ids_{}_2.bin'.format(alpha)))
 
+    dev_y = transform_y(dev_x, dev_y, alpha)
+    dev_x = transform_x(dev_x)
     dev_ids = [[vectorize_sent(q, word2index, oov_embed_size) for q in x] for x in dev_x]
-    serialize([dev_ids, dev_y], os.path.join(data_dir, 'dev_ids_{}.bin'.format(alpha)))
+    serialize([dev_ids, dev_y], os.path.join(data_dir, 'dev_ids_{}_2.bin'.format(alpha)))
 
-    # test_x = deserialize(os.path.join(data_dir, 'test.bin'))
-    # test_ids = [[vectorize_sent(q, word2index, oov_embed_size) for q in x] for x in test_x]
-    # serialize(test_ids, os.path.join(data_dir, 'test_ids.bin'))
+    test_x = deserialize(os.path.join(data_dir, 'test.bin'))
+    test_x = transform_x(test_x)
+    test_ids = [[vectorize_sent(q, word2index, oov_embed_size) for q in x] for x in test_x]
+    serialize(test_ids, os.path.join(data_dir, 'test_ids_{}_2.bin'.format(alpha)))
 
 
 if __name__ == '__main__':

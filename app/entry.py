@@ -38,9 +38,9 @@ FLAGS = tf.flags.FLAGS
 
 @exe_time
 def load_data():
-    train_ids, train_y = deserialize(os.path.join(FLAGS.data_dir, 'train_ids_0.7.bin'))
+    train_ids, train_y = deserialize(os.path.join(FLAGS.data_dir, 'train_ids_0.7_2.bin'))
     train_y = vectorize_y(train_y, FLAGS.num_class)
-    dev_ids, dev_y = deserialize(os.path.join(FLAGS.data_dir, 'dev_ids_0.7.bin'))
+    dev_ids, dev_y = deserialize(os.path.join(FLAGS.data_dir, 'dev_ids_0.7_2.bin'))
     dev_y = vectorize_y(dev_y, FLAGS.num_class)
     return train_ids, train_y, dev_ids, dev_y
 

@@ -26,7 +26,7 @@ FLAGS = tf.flags.FLAGS
 
 @exe_time
 def load_data():
-    test_ids = deserialize(os.path.join(FLAGS.data_dir, 'test_ids.bin'))
+    test_ids = deserialize(os.path.join(FLAGS.data_dir, 'test_ids_0.7_2.bin'))
     return test_ids
 
 
@@ -71,8 +71,7 @@ def write_predictions(all_predictions):
     with open(os.path.join(FLAGS.data_dir, 'sample_submission.csv'), 'r') as f:
         f_csv = csv.reader(f)
         headers = next(f_csv)
-    time_str = datetime.datetime.now().isoformat()
-    with open(os.path.join('..', 'submit', 'mlstm_pred_{}.csv'.format(time_str)), 'w',
+    with open(os.path.join('..', 'submit', 'mlstm_pred_{}.csv'.format(3)), 'w',
               newline='') as f:
         f_csv = csv.writer(f)
         f_csv.writerow(headers)
