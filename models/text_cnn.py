@@ -16,9 +16,9 @@ class TextCnn:
         with tf.variable_scope('embedding'):
             self.word_embedding = tf.get_variable(name='word_embedding',
                                                   shape=[vocab_size, embedding_size],
-                                                  initializer=tf.constant_initializer(
-                                                      word_embedding),
-                                                  trainable=False)
+                                                  initializer=tf.random_uniform_initializer(-1.0,
+                                                                                            1.0),
+                                                  trainable=True)
             embedded_sent1 = tf.nn.embedding_lookup(self.word_embedding, self.sent1)
             embedded_sent2 = tf.nn.embedding_lookup(self.word_embedding, self.sent2)
             self.embedded_expanded_sent1 = tf.expand_dims(embedded_sent1, -1)
@@ -32,31 +32,31 @@ class TextCnn:
                 W = tf.Variable(tf.truncated_normal(filter_shape, stddev=0.1), name="W")
                 b = tf.Variable(tf.constant(0.1, shape=[num_filters]), name="b")
 
-                conv = tf.nn.conv2d(input=self.embedded_expanded_sent1,
-                                    filter=W,
-                                    strides=[1, 1, 1, 1],
-                                    padding='VALID',
-                                    name='conv_1')
-                h = tf.nn.relu(tf.nn.bias_add(conv, b), name='relu_1')
-                pooled = tf.nn.max_pool(h,
-                                        ksize=[1, sentence_size - filter_size + 1, 1, 1],
-                                        strides=[1, 1, 1, 1],
-                                        padding='VALID',
-                                        name='pool_1')
-                pooled_outputs_1.append(pooled)
+                conv1 = tf.nn.conv2d(input=self.embedded_expanded_sent1,
+                                     filter=W,
+                                     strides=[1, 1, 1, 1],
+                                     padding='VALID',
+                                     name='conv_1')
+                h1 = tf.nn.relu(tf.nn.bias_add(conv1, b), name='relu_1')
+                pooled1 = tf.nn.max_pool(h1,
+                                         ksize=[1, sentence_size - filter_size + 1, 1, 1],
+                                         strides=[1, 1, 1, 1],
+                                         padding='VALID',
+                                         name='pool_1')
+                pooled_outputs_1.append(pooled1)
 
-                conv = tf.nn.conv2d(input=self.embedded_expanded_sent1,
-                                    filter=W,
-                                    strides=[1, 1, 1, 1],
-                                    padding='VALID',
-                                    name='conv_2')
-                h = tf.nn.relu(tf.nn.bias_add(conv, b), name='relu_2')
-                pooled = tf.nn.max_pool(h,
-                                        ksize=[1, sentence_size - filter_size + 1, 1, 1],
-                                        strides=[1, 1, 1, 1],
-                                        padding='VALID',
-                                        name='pool_2')
-                pooled_outputs_2.append(pooled)
+                conv2 = tf.nn.conv2d(input=self.embedded_expanded_sent1,
+                                     filter=W,
+                                     strides=[1, 1, 1, 1],
+                                     padding='VALID',
+                                     name='conv_2')
+                h2 = tf.nn.relu(tf.nn.bias_add(conv2, b), name='relu_2')
+                pooled2 = tf.nn.max_pool(h2,
+                                         ksize=[1, sentence_size - filter_size + 1, 1, 1],
+                                         strides=[1, 1, 1, 1],
+                                         padding='VALID',
+                                         name='pool_2')
+                pooled_outputs_2.append(pooled2)
 
         num_filters_total = len(filter_sizes) * num_filters
         pooled_reshape_1 = tf.reshape(tf.concat(pooled_outputs_1, 3), [-1, num_filters_total])
