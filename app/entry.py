@@ -33,14 +33,17 @@ tf.flags.DEFINE_integer("num_checkpoints", 5, "Number of checkpoints to store (d
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
+tf.flags.DEFINE_string('train_file', os.path.join('..', 'dataset', 'train_ids_0.7.bin'), '')
+tf.flags.DEFINE_string('dev_file', os.path.join('..', 'dataset', 'dev_ids_0.7.bin'), '')
+
 FLAGS = tf.flags.FLAGS
 
 
 @exe_time
 def load_data():
-    train_ids, train_y = deserialize(os.path.join(FLAGS.data_dir, 'train_ids_0.7_2.bin'))
+    train_ids, train_y = deserialize(FLAGS.train_file)
     train_y = vectorize_y(train_y, FLAGS.num_class)
-    dev_ids, dev_y = deserialize(os.path.join(FLAGS.data_dir, 'dev_ids_0.7_2.bin'))
+    dev_ids, dev_y = deserialize(FLAGS.dev_file)
     dev_y = vectorize_y(dev_y, FLAGS.num_class)
     return train_ids, train_y, dev_ids, dev_y
 
@@ -60,8 +63,8 @@ def train_step(x_batch, y_batch, train_summary_op,
     sents1 = x_batch[:, 0].tolist()
     sents2 = x_batch[:, 1].tolist()
     feed_dict = {
-        model.premises: sents1,
-        model.hypotheses: sents2,
+        model.sent1: sents1,
+        model.sent2: sents2,
         model.labels: y_batch,
         model.dropout_keep_prob: FLAGS.dropout_keep_prob
     }
@@ -84,8 +87,8 @@ def dev_step(x_batch, y_batch, dev_summary_op,
     sents1 = x_batch[:, 0].tolist()
     sents2 = x_batch[:, 1].tolist()
     feed_dict = {
-        model.premises: sents1,
-        model.hypotheses: sents2,
+        model.sent1: sents1,
+        model.sent2: sents2,
         model.labels: y_batch,
         model.dropout_keep_prob: 1.0
     }
@@ -97,6 +100,19 @@ def dev_step(x_batch, y_batch, dev_summary_op,
     print("{}: step {}, loss {:.4f}, rec {:.4f}, acc {:.4f}".format(time_str, step,
                                                                     loss, recall, accuracy))
     dev_summary_writer.add_summary(summaries, step)
+
+
+@exe_time
+def get_model(word_embeddings, model_name):
+    model = None
+    if model_name == 'match_lstm':
+        model = MatchLstm(vocab_size=len(word_embeddings),
+                          sentence_size=FLAGS.sent_size,
+                          embedding_size=FLAGS.embedding_size,
+                          word_embedding=word_embeddings,
+                          initial_lr=FLAGS.learning_rate,
+                          num_class=FLAGS.num_class)
+    return model
 
 
 def main(_):
@@ -112,15 +128,10 @@ def main(_):
         sess = tf.Session(config=session_conf)
 
         with sess.as_default():
-            model = MatchLstm(vocab_size=len(word_embeddings),
-                              sentence_size=FLAGS.sent_size,
-                              embedding_size=FLAGS.embedding_size,
-                              word_embedding=word_embeddings,
-                              initial_lr=FLAGS.learning_rate,
-                              num_class=FLAGS.num_class)
+            model = get_model(word_embeddings, 'match_lstm')
 
             timestamp = str(int(time.time()))
-            out_dir = os.path.abspath(os.path.join(FLAGS.data_dir, 'runs', timestamp))
+            out_dir = os.path.abspath(os.path.join('..', 'runs', timestamp))
             print('Writing to {}\n'.format(out_dir))
 
             loss_summary = tf.summary.scalar(name='loss', tensor=model.loss_op)

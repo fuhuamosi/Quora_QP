@@ -5,11 +5,8 @@ import tensorflow as tf
 import numpy as np
 import tensorflow.contrib as contrib
 
-from app.decorator import exe_time
-
 
 class MatchLstm:
-    @exe_time
     def __init__(self, vocab_size, sentence_size, embedding_size,
                  word_embedding, initializer=tf.truncated_normal_initializer(stddev=0.1),
                  num_class=3, window_size=4, name='MatchLstm', initial_lr=1e-3):
@@ -30,16 +27,16 @@ class MatchLstm:
         self._initial_optimizer()
 
     def _build_inputs_and_vars(self):
-        self.premises = tf.placeholder(shape=[None, self._sentence_size], dtype=tf.int32,
-                                       name='premises')
-        self.hypotheses = tf.placeholder(shape=[None, self._sentence_size], dtype=tf.int32,
-                                         name='hypotheses')
+        self.sent1 = tf.placeholder(shape=[None, self._sentence_size], dtype=tf.int32,
+                                    name='sent1')
+        self.sent2 = tf.placeholder(shape=[None, self._sentence_size], dtype=tf.int32,
+                                    name='sent2')
         self.labels = tf.placeholder(shape=[None, self._num_class], dtype=tf.float32,
                                      name='labels')
         self.dropout_keep_prob = tf.placeholder(shape=[], dtype=tf.float32,
                                                 name='dropout_keep_prob')
 
-        self._batch_size = tf.shape(self.premises)[0]
+        self._batch_size = tf.shape(self.sent1)[0]
 
         self.lr = tf.get_variable(shape=[], dtype=tf.float32, trainable=False,
                                   initializer=tf.constant_initializer(self._initial_lr), name='lr')
@@ -53,20 +50,20 @@ class MatchLstm:
                                                    initializer=tf.constant_initializer(self._we),
                                                    trainable=False)
 
-        self._embed_pre = self._embed_inputs(self.premises, self._word_embedding, 'embed_pre')
-        self._embed_hyp = self._embed_inputs(self.hypotheses, self._word_embedding, 'embed_hyp')
+        self._embed_pre = self._embed_inputs(self.sent1, self._word_embedding, 'embed_pre')
+        self._embed_hyp = self._embed_inputs(self.sent2, self._word_embedding, 'embed_hyp')
 
     def _inference(self):
         with tf.variable_scope('{}_lstm_s'.format(self._name)):
             lstm_s = contrib.rnn.BasicLSTMCell(num_units=self._embedding_size, forget_bias=0.0)
-            pre_length = self._length(self.premises)
+            pre_length = self._length(self.sent1)
             h_s, _ = tf.nn.dynamic_rnn(lstm_s, self._embed_pre, sequence_length=pre_length,
                                        dtype=tf.float32)
             self.h_s = h_s
 
         with tf.variable_scope('{}_lstm_t'.format(self._name)):
             lstm_t = contrib.rnn.BasicLSTMCell(num_units=self._embedding_size, forget_bias=0.0)
-            hyp_length = self._length(self.hypotheses)
+            hyp_length = self._length(self.sent2)
             h_t, _ = tf.nn.dynamic_rnn(lstm_t, self._embed_hyp, sequence_length=hyp_length,
                                        dtype=tf.float32)
             self.h_t = h_t
@@ -115,8 +112,8 @@ class MatchLstm:
     def _match_sent(self, i, h_m_arr):
         h_s_i = self.h_s[i]
         h_t_i = self.h_t[i]
-        length_s_i = self._length(self.premises[i])
-        length_t_i = self._length(self.hypotheses[i])
+        length_s_i = self._length(self.sent1[i])
+        length_t_i = self._length(self.sent2[i])
 
         state = self.lstm_m.zero_state(batch_size=1, dtype=tf.float32)
 
@@ -202,7 +199,7 @@ if __name__ == '__main__':
         sess.run(tf.global_variables_initializer())
         for temp in range(300):
             loss, _, step = sess.run([model.loss_op, model.train_op, model.global_step],
-                                     feed_dict={model.premises: sent1, model.hypotheses: sent2,
+                                     feed_dict={model.sent1: sent1, model.sent2: sent2,
                                                 model.labels: labels, model.lr: 0.001})
             print(step, loss)
             sent1, sent2 = sent2, sent1

@@ -12,21 +12,24 @@ from app.decorator import exe_time
 from preprocess.file_utils import deserialize
 
 # Eval Parameters
-tf.flags.DEFINE_string("checkpoint_dir", os.path.join('..', 'dataset', 'runs',
-                                                      '1490110803', 'checkpoints')
-                       , "Checkpoint directory from training run")
 tf.flags.DEFINE_string('data_dir', os.path.join('..', 'dataset'), 'Directory containing dataset')
 
 # Misc Parameters
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
+tf.flags.DEFINE_string("checkpoint_dir", os.path.join('..', 'dataset', 'runs',
+                                                      '1490110803', 'checkpoints')
+                       , "Checkpoint directory from training run")
+tf.flags.DEFINE_string('test_file', os.path.join('..', 'dataset', 'test_ids.bin'), '')
+tf.flags.DEFINE_string('eval_file', os.path.join('..', 'submit', 'mlstm_pred_4.csv'), '')
+
 FLAGS = tf.flags.FLAGS
 
 
 @exe_time
 def load_data():
-    test_ids = deserialize(os.path.join(FLAGS.data_dir, 'test_ids_0.7_2.bin'))
+    test_ids = deserialize(FLAGS.test_file)
     return test_ids
 
 
@@ -37,16 +40,16 @@ def cal_dup_score(x):
 
 
 @exe_time
-def test_step(x_batch, pre, hyp, dropout_prob, logits, sess):
+def test_step(x_batch, sent1, sent2, dropout_keep_prob, logits, sess):
     """
     Evaluates model on a dev set
     """
     sents1 = x_batch[:, 0].tolist()
     sents2 = x_batch[:, 1].tolist()
     feed_dict = {
-        pre: sents1,
-        hyp: sents2,
-        dropout_prob: 1.0
+        sent1: sents1,
+        sent2: sents2,
+        dropout_keep_prob: 1.0
     }
     scores = sess.run(logits, feed_dict)
     dup_score = cal_dup_score(scores)
@@ -71,8 +74,7 @@ def write_predictions(all_predictions):
     with open(os.path.join(FLAGS.data_dir, 'sample_submission.csv'), 'r') as f:
         f_csv = csv.reader(f)
         headers = next(f_csv)
-    with open(os.path.join('..', 'submit', 'mlstm_pred_{}.csv'.format(3)), 'w',
-              newline='') as f:
+    with open(FLAGS.eval_file, 'w', newline='') as f:
         f_csv = csv.writer(f)
         f_csv.writerow(headers)
         for i, pre in enumerate(all_predictions):
@@ -96,8 +98,8 @@ def main(_):
             saver = tf.train.import_meta_graph('{}.meta'.format(checkpoint_file))
             saver.restore(sess, checkpoint_file)
 
-            input1 = graph.get_operation_by_name('premises').outputs[0]
-            input2 = graph.get_operation_by_name('hypotheses').outputs[0]
+            input1 = graph.get_operation_by_name('sent1').outputs[0]
+            input2 = graph.get_operation_by_name('sent2').outputs[0]
             dropout_keep_prob = graph.get_operation_by_name('dropout_keep_prob').outputs[0]
             logits = graph.get_operation_by_name('MatchLstm_fully_connect/add').outputs[0]
 
