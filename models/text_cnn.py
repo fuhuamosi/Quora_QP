@@ -46,7 +46,7 @@ class TextCnn:
                                          name='pool_1')
                 pooled_outputs_1.append(pooled1)
 
-                conv2 = tf.nn.conv2d(input=self.embedded_expanded_sent1,
+                conv2 = tf.nn.conv2d(input=self.embedded_expanded_sent2,
                                      filter=W,
                                      strides=[1, 1, 1, 1],
                                      padding='VALID',
@@ -63,27 +63,28 @@ class TextCnn:
         pooled_reshape_1 = tf.reshape(tf.concat(pooled_outputs_1, 3), [-1, num_filters_total])
         pooled_reshape_2 = tf.reshape(tf.concat(pooled_outputs_2, 3), [-1, num_filters_total])
 
-        # pooled_flat_1 = tf.nn.dropout(pooled_reshape_1, self.dropout_keep_prob)
-        # pooled_flat_2 = tf.nn.dropout(pooled_reshape_2, self.dropout_keep_prob)
-        #
-        # pooled_len_1 = tf.sqrt(tf.reduce_sum(pooled_flat_1 * pooled_flat_1, 1))
-        # pooled_len_2 = tf.sqrt(tf.reduce_sum(pooled_flat_2 * pooled_flat_2, 1))
-        # pooled_mul = tf.reduce_sum(pooled_flat_1 * pooled_flat_2, 1)
-        #
-        # with tf.name_scope('output'):
-        #     self.cos_score = pooled_mul / (pooled_len_1 * pooled_len_2)
-        #     self.zero_score = tf.ones_like(self.cos_score) - self.cos_score
-        #     self.logits = tf.reshape(tf.concat([self.zero_score, self.cos_score], 0),
-        #                              [-1, num_class])
+        pooled_flat_1 = tf.nn.dropout(pooled_reshape_1, self.dropout_keep_prob)
+        pooled_flat_2 = tf.nn.dropout(pooled_reshape_2, self.dropout_keep_prob)
+
+        pooled_len_1 = tf.sqrt(tf.reduce_sum(pooled_flat_1 * pooled_flat_1, 1))
+        pooled_len_2 = tf.sqrt(tf.reduce_sum(pooled_flat_2 * pooled_flat_2, 1))
+        pooled_mul = tf.reduce_sum(pooled_flat_1 * pooled_flat_2, 1)
+
+        with tf.name_scope('output'):
+            self.cos_score = pooled_mul / (pooled_len_1 * pooled_len_2)
+            self.zero_score = tf.ones_like(self.cos_score) - self.cos_score
+            self.logits = tf.reshape(tf.concat([self.zero_score, self.cos_score], 0),
+                                     [-1, num_classes])
 
         with tf.name_scope('loss'):
-            pooled_sub = tf.nn.dropout(pooled_reshape_1 - pooled_reshape_2, self.dropout_keep_prob)
-            W2 = tf.get_variable(
-                "W",
-                shape=[num_filters_total, num_classes],
-                initializer=contrib.layers.xavier_initializer())
-            b2 = tf.Variable(tf.constant(0.1, shape=[num_classes]), name="b")
-            self.logits = tf.nn.xw_plus_b(pooled_sub, W2, b2)
+            # pooled_sub = tf.nn.dropout(pooled_reshape_1 - pooled_reshape_2,
+            # self.dropout_keep_prob)
+            # W2 = tf.get_variable(
+            #     "W",
+            #     shape=[num_filters_total, num_classes],
+            #     initializer=contrib.layers.xavier_initializer())
+            # b2 = tf.Variable(tf.constant(0.1, shape=[num_classes]), name="b")
+            # self.logits = tf.nn.xw_plus_b(pooled_sub, W2, b2)
             cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=self.labels,
                                                                     logits=self.logits,
                                                                     name='cross_entropy')
