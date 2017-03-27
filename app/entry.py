@@ -124,7 +124,7 @@ def get_model(word_embeddings, model_name):
                         initial_lr=FLAGS.learning_rate,
                         filter_sizes=list(map(int, FLAGS.filter_sizes.split(','))),
                         num_filters=FLAGS.num_filters,
-                        num_class=FLAGS.num_class)
+                        num_classes=FLAGS.num_class)
     return model
 
 
