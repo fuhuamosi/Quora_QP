@@ -5,6 +5,7 @@ from preprocess.file_utils import deserialize
 from preprocess.data_helpers import vectorize_y, batch_iter, sample_eval_data
 from app.decorator import exe_time
 from models.match_lstm import MatchLstm
+from models.text_cnn import TextCnn
 
 import tensorflow as tf
 import os
@@ -19,7 +20,7 @@ tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (defau
 tf.flags.DEFINE_integer('batch_size', 32, 'Batch size for training.')
 tf.flags.DEFINE_integer('sent_size', 50, 'Max sentence size.')
 tf.flags.DEFINE_integer('num_class', 2, 'Max sentence size.')
-tf.flags.DEFINE_integer('num_epochs', 3, 'Number of epochs to train for.')
+tf.flags.DEFINE_integer('num_epochs', 5, 'Number of epochs to train for.')
 tf.flags.DEFINE_integer('embedding_size', 300, 'Embedding size for embedding matrices.')
 tf.flags.DEFINE_string('data_dir', os.path.join('..', 'dataset'), 'Directory containing dataset')
 
@@ -32,6 +33,9 @@ tf.flags.DEFINE_integer("num_checkpoints", 5, "Number of checkpoints to store (d
 # Misc Parameters
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
+
+tf.flags.DEFINE_string("filter_sizes", "1,2,3", "Comma-separated filter sizes (default: '3,4,5')")
+tf.flags.DEFINE_integer("num_filters", 256, "Number of filters per filter size (default: 128)")
 
 tf.flags.DEFINE_string('train_file', os.path.join('..', 'dataset', 'train_ids_0.7.bin'), '')
 tf.flags.DEFINE_string('dev_file', os.path.join('..', 'dataset', 'dev_ids_0.7.bin'), '')
@@ -112,6 +116,15 @@ def get_model(word_embeddings, model_name):
                           word_embedding=word_embeddings,
                           initial_lr=FLAGS.learning_rate,
                           num_class=FLAGS.num_class)
+    elif model_name == 'text_cnn':
+        model = TextCnn(vocab_size=len(word_embeddings),
+                        sentence_size=FLAGS.sent_size,
+                        embedding_size=FLAGS.embedding_size,
+                        word_embedding=word_embeddings,
+                        initial_lr=FLAGS.learning_rate,
+                        filter_sizes=list(map(int, FLAGS.filter_sizes.split(','))),
+                        num_filters=FLAGS.num_filters,
+                        num_class=FLAGS.num_class)
     return model
 
 
@@ -128,7 +141,7 @@ def main(_):
         sess = tf.Session(config=session_conf)
 
         with sess.as_default():
-            model = get_model(word_embeddings, 'match_lstm')
+            model = get_model(word_embeddings, 'text_cnn')
 
             timestamp = str(int(time.time()))
             out_dir = os.path.abspath(os.path.join('..', 'runs', timestamp))
