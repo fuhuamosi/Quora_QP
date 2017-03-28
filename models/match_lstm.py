@@ -83,11 +83,17 @@ class MatchLstm:
             self.h_drop = tf.nn.dropout(self.h_m_tensor, self.dropout_keep_prob)
 
         with tf.variable_scope('{}_fully_connect'.format(self._name)):
-            w_fc = tf.get_variable(shape=[self._embedding_size, self._num_class],
-                                   initializer=contrib.layers.xavier_initializer(),
-                                   name='w_fc')
-            b_fc = tf.Variable(tf.constant(0.1, shape=[self._num_class]), name="b_fc")
-            self.logits = tf.matmul(self.h_drop, w_fc) + b_fc
+            hidden_size = 25
+            w1 = tf.get_variable(shape=[self._embedding_size, hidden_size],
+                                 initializer=contrib.layers.xavier_initializer(),
+                                 name='w1')
+            b1 = tf.Variable(tf.constant(0.1, shape=[hidden_size]), name="b1")
+            output1 = tf.matmul(self.h_drop, w1) + b1
+            w2 = tf.get_variable(shape=[hidden_size, self._num_class],
+                                 initializer=contrib.layers.xavier_initializer(),
+                                 name='w2')
+            b2 = tf.Variable(tf.constant(0.1, shape=[self._num_class]), name="b2")
+            self.logits = tf.matmul(output1, w2) + b2
 
         with tf.name_scope('loss'):
             cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=self.labels,

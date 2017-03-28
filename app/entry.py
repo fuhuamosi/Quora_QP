@@ -35,7 +35,7 @@ tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device 
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
 tf.flags.DEFINE_string("filter_sizes", "1,2,3", "Comma-separated filter sizes (default: '3,4,5')")
-tf.flags.DEFINE_integer("num_filters", 256, "Number of filters per filter size (default: 128)")
+tf.flags.DEFINE_integer("num_filters", 64, "Number of filters per filter size (default: 128)")
 
 tf.flags.DEFINE_string('train_file', os.path.join('..', 'dataset', 'train_ids_0.7.bin'), '')
 tf.flags.DEFINE_string('dev_file', os.path.join('..', 'dataset', 'dev_ids_0.7.bin'), '')
@@ -141,7 +141,7 @@ def main(_):
         sess = tf.Session(config=session_conf)
 
         with sess.as_default():
-            model = get_model(word_embeddings, 'text_cnn')
+            model = get_model(word_embeddings, 'match_lstm')
 
             timestamp = str(int(time.time()))
             out_dir = os.path.abspath(os.path.join('..', 'runs', timestamp))
