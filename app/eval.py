@@ -18,11 +18,11 @@ tf.flags.DEFINE_string('data_dir', os.path.join('..', 'dataset'), 'Directory con
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
-tf.flags.DEFINE_string("checkpoint_dir", os.path.join('..', 'dataset', 'runs',
-                                                      '1490110803', 'checkpoints')
+tf.flags.DEFINE_string("checkpoint_dir", os.path.join('..', 'runs',
+                                                      '1490760893', 'checkpoints')
                        , "Checkpoint directory from training run")
 tf.flags.DEFINE_string('test_file', os.path.join('..', 'dataset', 'test_ids.bin'), '')
-tf.flags.DEFINE_string('eval_file', os.path.join('..', 'submit', 'mlstm_pred_4.csv'), '')
+tf.flags.DEFINE_string('eval_file', os.path.join('..', 'submit', 'mlstm_pred_5.csv'), '')
 
 FLAGS = tf.flags.FLAGS
 
@@ -42,7 +42,7 @@ def cal_dup_score(x):
 @exe_time
 def test_step(x_batch, sent1, sent2, dropout_keep_prob, logits, sess):
     """
-    Evaluates model on a dev set
+    Evaluates model on a dev setc
     """
     sents1 = x_batch[:, 0].tolist()
     sents2 = x_batch[:, 1].tolist()
@@ -101,7 +101,7 @@ def main(_):
             input1 = graph.get_operation_by_name('sent1').outputs[0]
             input2 = graph.get_operation_by_name('sent2').outputs[0]
             dropout_keep_prob = graph.get_operation_by_name('dropout_keep_prob').outputs[0]
-            logits = graph.get_operation_by_name('MatchLstm_fully_connect/add').outputs[0]
+            logits = graph.get_operation_by_name('fully_connect/add').outputs[0]
 
             all_predictions = np.array([])
             for x, end_index in batch_data(test_ids):
