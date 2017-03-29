@@ -44,7 +44,7 @@ class MatchLstm:
                                      name='new_lr')
         self.lr_update_op = tf.assign(self.lr, self.new_lr)
 
-        with tf.variable_scope(self._name):
+        with tf.variable_scope('embedding'):
             self._word_embedding = tf.get_variable(name='word_embedding',
                                                    shape=[self._vocab_size, self._embedding_size],
                                                    initializer=tf.constant_initializer(self._we),
@@ -54,21 +54,21 @@ class MatchLstm:
         self._embed_hyp = self._embed_inputs(self.sent2, self._word_embedding, 'embed_hyp')
 
     def _inference(self):
-        with tf.variable_scope('{}_lstm_s'.format(self._name)):
+        with tf.variable_scope('lstm_s'):
             lstm_s = contrib.rnn.BasicLSTMCell(num_units=self._embedding_size, forget_bias=0.0)
             pre_length = self._length(self.sent1)
             h_s, _ = tf.nn.dynamic_rnn(lstm_s, self._embed_pre, sequence_length=pre_length,
                                        dtype=tf.float32)
             self.h_s = h_s
 
-        with tf.variable_scope('{}_lstm_t'.format(self._name)):
+        with tf.variable_scope('lstm_t'):
             lstm_t = contrib.rnn.BasicLSTMCell(num_units=self._embedding_size, forget_bias=0.0)
             hyp_length = self._length(self.sent2)
             h_t, _ = tf.nn.dynamic_rnn(lstm_t, self._embed_hyp, sequence_length=hyp_length,
                                        dtype=tf.float32)
             self.h_t = h_t
 
-        with tf.name_scope('{}_match_sents'.format(self._name)):
+        with tf.name_scope('match_sents'):
             self.lstm_m = contrib.rnn.BasicLSTMCell(num_units=self._embedding_size,
                                                     forget_bias=0.0)
             h_m_arr = tf.TensorArray(dtype=tf.float32, size=self._batch_size)
@@ -82,18 +82,12 @@ class MatchLstm:
         with tf.name_scope('dropout'):
             self.h_drop = tf.nn.dropout(self.h_m_tensor, self.dropout_keep_prob)
 
-        with tf.variable_scope('{}_fully_connect'.format(self._name)):
-            hidden_size = 25
-            w1 = tf.get_variable(shape=[self._embedding_size, hidden_size],
+        with tf.variable_scope('fully_connect'):
+            w1 = tf.get_variable(shape=[self._embedding_size, self._num_class],
                                  initializer=contrib.layers.xavier_initializer(),
                                  name='w1')
-            b1 = tf.Variable(tf.constant(0.1, shape=[hidden_size]), name="b1")
-            output1 = tf.matmul(self.h_drop, w1) + b1
-            w2 = tf.get_variable(shape=[hidden_size, self._num_class],
-                                 initializer=contrib.layers.xavier_initializer(),
-                                 name='w2')
-            b2 = tf.Variable(tf.constant(0.1, shape=[self._num_class]), name="b2")
-            self.logits = tf.matmul(output1, w2) + b2
+            b1 = tf.Variable(tf.constant(0.1, shape=[self._num_class]), name="b1")
+            self.logits = tf.matmul(self.h_drop, w1) + b1
 
         with tf.name_scope('loss'):
             cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=self.labels,
@@ -138,7 +132,7 @@ class MatchLstm:
         h_t_k = tf.reshape(h_t[k], [1, -1])
         h_s_j = tf.slice(h_s, begin=[0, 0], size=[length_s, self._embedding_size])
 
-        with tf.variable_scope('{}_attention_w'.format(self._name)):
+        with tf.variable_scope('attention_w'):
             w_s = tf.get_variable(shape=[self._embedding_size, self._embedding_size],
                                   initializer=self._initializer, name='w_s')
             w_t = tf.get_variable(shape=[self._embedding_size, self._embedding_size],
@@ -148,7 +142,7 @@ class MatchLstm:
             w_e = tf.get_variable(shape=[self._embedding_size, 1],
                                   initializer=self._initializer, name='w_e')
 
-        with tf.variable_scope('{}_align'.format(self._name)):
+        with tf.variable_scope('align'):
             last_m_h = state.h
             sum_h = tf.matmul(h_s_j, w_s) + tf.matmul(h_t_k, w_t) + tf.matmul(last_m_h, w_m)
             e_kj = tf.matmul(tf.tanh(sum_h), w_e)
@@ -157,7 +151,7 @@ class MatchLstm:
             alpha_k.set_shape([1, self._embedding_size])
             m_k = tf.concat([alpha_k, h_t_k], axis=1)
 
-        with tf.variable_scope('{}_lstm_m'.format(self._name)):
+        with tf.variable_scope('lstm_m'):
             _, new_state = self.lstm_m(inputs=m_k, state=state)
 
         k = tf.add(k, 1)
@@ -174,7 +168,7 @@ class MatchLstm:
         return length
 
     def _initial_optimizer(self):
-        with tf.variable_scope('{}_step'.format(self._name)):
+        with tf.variable_scope('step'):
             self.global_step = tf.get_variable(shape=[],
                                                initializer=tf.constant_initializer(0),
                                                dtype=tf.int32,
@@ -184,28 +178,4 @@ class MatchLstm:
 
 
 if __name__ == '__main__':
-    with tf.Session() as sess:
-        embedding = np.random.randn(4, 6)
-        embedding[0] = 0.0
-        model = MatchLstm(vocab_size=7, sentence_size=5, embedding_size=6,
-                          word_embedding=embedding)
-        model.batch_size = 1
-        sent1 = [[3, -1, 2, 1, 0],
-                 [4, 5, 1, 0, 0],
-                 [2, 1, 0, 0, 0]]
-
-        sent2 = [[2, 1, 0, 0, 0],
-                 [3, -1, 2, 1, 0],
-                 [4, 5, 1, 0, 0]]
-
-        labels = [[1, 0, 0],
-                  [0, 1, 0],
-                  [0, 0, 1]]
-
-        sess.run(tf.global_variables_initializer())
-        for temp in range(300):
-            loss, _, step = sess.run([model.loss_op, model.train_op, model.global_step],
-                                     feed_dict={model.sent1: sent1, model.sent2: sent2,
-                                                model.labels: labels, model.lr: 0.001})
-            print(step, loss)
-            sent1, sent2 = sent2, sent1
+    pass
