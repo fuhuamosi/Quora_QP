@@ -22,7 +22,7 @@ tf.flags.DEFINE_string("checkpoint_dir", os.path.join('..', 'runs',
                                                       '1490760893', 'checkpoints')
                        , "Checkpoint directory from training run")
 tf.flags.DEFINE_string('test_file', os.path.join('..', 'dataset', 'test_ids.bin'), '')
-tf.flags.DEFINE_string('eval_file', os.path.join('..', 'submit', 'mlstm_pred_5.csv'), '')
+tf.flags.DEFINE_string('eval_file', os.path.join('..', 'submit', 'mlstm_pred_6.csv'), '')
 
 FLAGS = tf.flags.FLAGS
 
@@ -42,7 +42,7 @@ def cal_dup_score(x):
 @exe_time
 def test_step(x_batch, sent1, sent2, dropout_keep_prob, logits, sess):
     """
-    Evaluates model on a dev setc
+    Evaluates model on a dev set
     """
     sents1 = x_batch[:, 0].tolist()
     sents2 = x_batch[:, 1].tolist()

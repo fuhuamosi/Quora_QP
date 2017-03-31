@@ -17,18 +17,19 @@ def clean_str(string):
     Tokenization/string cleaning for all datasets except for SST.
     Original taken from https://github.com/yoonkim/CNN_sentence/blob/master/process_data.py
     """
-    string = re.sub(r"[^A-Za-z0-9(),!?\'`]", " ", string)
+    string = re.sub(r"[^A-Za-z0-9(),!?\'`-]", " ", string)
     string = re.sub(r"'s", " 's", string)
-    string = re.sub(r"'ve", " 've", string)
-    string = re.sub(r"n't", " n't", string)
-    string = re.sub(r"'re", " 're", string)
-    string = re.sub(r"'d", " 'd", string)
-    string = re.sub(r"'ll", " 'll", string)
-    string = re.sub(r",", " , ", string)
-    string = re.sub(r"!", " ! ", string)
-    string = re.sub(r"\(", " ( ", string)
-    string = re.sub(r"\)", " ) ", string)
-    string = re.sub(r"\?", " ? ", string)
+    string = re.sub(r"'ve", " have", string)
+    string = re.sub(r"n't", " not", string)
+    string = re.sub(r"'re", " are", string)
+    string = re.sub(r"'m", " am", string)
+    string = re.sub(r"'d", " would", string)
+    string = re.sub(r"'ll", " will", string)
+    string = re.sub(r",", " ", string)
+    string = re.sub(r"!", " ", string)
+    string = re.sub(r"\(", " ", string)
+    string = re.sub(r"\)", " ", string)
+    string = re.sub(r"\?", " ", string)
     string = re.sub(r"\s{2,}", " ", string)
     return string.strip().lower().split(' ')
 
@@ -68,21 +69,25 @@ def load_data(path, need_label=True):
     return (x, y) if need_label else x
 
 
-def vectorize_sent(sent, word2idx: Dict, oov_size, sent_size=50):
-    trim_sent = sent[:sent_size]
+def vectorize_sent(sent, word2idx: Dict, oov_size, idx, sent_size=50):
+    if idx == 0:
+        trim_sent = sent[:sent_size - 1]
+    else:
+        trim_sent = sent[:sent_size]
     dict_len = len(word2idx)
     sent_ids = [word2idx.get(w, hash(w) % oov_size + dict_len) for w in trim_sent]
+
+    # Add null token in sent1
+    if idx == 0:
+        sent_ids.append(NULL_ID)
+
     pad_length = sent_size - len(sent_ids)
     sent_ids.extend([PAD_ID] * pad_length)
     return sent_ids
 
 
-def vectorize_y(ys, num_class):
-    y_dis = np.zeros([len(ys), num_class], dtype=np.float32)
-    for i in range(len(ys)):
-        y_dis[i, 1] = float(ys[i])
-        y_dis[i, 0] = 1.0 - y_dis[i, 1]
-    return y_dis.tolist()
+def cast_y(ys):
+    return [float(y) for y in ys]
 
 
 def sample_eval_data(dev_x, dev_y, size):
@@ -99,7 +104,7 @@ def transform_y(x, y, alpha):
     return y
 
 
-def transform_x(x):
+def remove_lcs(x):
     x_new = []
     for sent1, sent2 in x:
         word_set1 = set(sent1)
@@ -123,22 +128,21 @@ def main():
     word_embeddings = deserialize(os.path.join(data_dir, 'word_embeddings_glove.bin'))
     oov_embed_size = len(word_embeddings) - len(word2index)
 
-    alpha = 0.7
-
-    train_y = transform_y(train_x, train_y, alpha)
-    train_x = transform_x(train_x)
-    train_ids = [[vectorize_sent(q, word2index, oov_embed_size) for q in x] for x in train_x]
-    serialize([train_ids, train_y], os.path.join(data_dir, 'train_ids_{}_2.bin'.format(alpha)))
-
-    dev_y = transform_y(dev_x, dev_y, alpha)
-    dev_x = transform_x(dev_x)
-    dev_ids = [[vectorize_sent(q, word2index, oov_embed_size) for q in x] for x in dev_x]
-    serialize([dev_ids, dev_y], os.path.join(data_dir, 'dev_ids_{}_2.bin'.format(alpha)))
+    # # train_x = remove_lcs(train_x)
+    # train_ids = [[vectorize_sent(q, word2index, oov_embed_size, i, 50) for i, q in enumerate(x)]
+    #              for x in train_x]
+    # serialize([train_ids, train_y], os.path.join(data_dir, 'train_ids.bin'))
+    #
+    # # dev_x = remove_lcs(dev_x)
+    # dev_ids = [[vectorize_sent(q, word2index, oov_embed_size, i, 50) for i, q in enumerate(x)]
+    #            for x in dev_x]
+    # serialize([dev_ids, dev_y], os.path.join(data_dir, 'dev_ids.bin'))
 
     test_x = deserialize(os.path.join(data_dir, 'test.bin'))
-    test_x = transform_x(test_x)
-    test_ids = [[vectorize_sent(q, word2index, oov_embed_size) for q in x] for x in test_x]
-    serialize(test_ids, os.path.join(data_dir, 'test_ids_{}_2.bin'.format(alpha)))
+    # test_x = remove_lcs(test_x)
+    test_ids = [[vectorize_sent(q, word2index, oov_embed_size, i, 50) for i, q in enumerate(x)]
+                for x in test_x]
+    serialize(test_ids, os.path.join(data_dir, 'test_ids.bin'))
 
 
 if __name__ == '__main__':

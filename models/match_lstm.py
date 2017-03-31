@@ -31,7 +31,7 @@ class MatchLstm:
                                     name='sent1')
         self.sent2 = tf.placeholder(shape=[None, self._sentence_size], dtype=tf.int32,
                                     name='sent2')
-        self.labels = tf.placeholder(shape=[None, self._num_class], dtype=tf.float32,
+        self.labels = tf.placeholder(shape=[None], dtype=tf.int32,
                                      name='labels')
         self.dropout_keep_prob = tf.placeholder(shape=[], dtype=tf.float32,
                                                 name='dropout_keep_prob')
@@ -90,20 +90,20 @@ class MatchLstm:
             self.logits = tf.matmul(self.h_drop, w1) + b1
 
         with tf.name_scope('loss'):
-            cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=self.labels,
-                                                                    logits=self.logits,
-                                                                    name='cross_entropy')
+            cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.labels,
+                                                                           logits=self.logits,
+                                                                           name='cross_entropy')
             self.loss_op = tf.reduce_mean(cross_entropy, name='loss_op')
 
         # Accuracy
         with tf.name_scope("accuracy"):
-            self.predict_op = tf.arg_max(self.logits, dimension=1, name='predict_op')
-            hard_labels = tf.argmax(self.labels, axis=1, name='hard_labels')
-            correct_predictions = tf.cast(tf.equal(self.predict_op, hard_labels), tf.float32)
+            self.predict_op = tf.cast(tf.arg_max(self.logits, dimension=1, name='predict_op'),
+                                      tf.int32)
+            correct_predictions = tf.cast(tf.equal(self.predict_op, self.labels), tf.float32)
             self.accuracy_op = tf.reduce_mean(correct_predictions,
                                               name='accuracy_op')
 
-            hard_labels = tf.reshape(tf.cast(hard_labels, dtype=tf.float32), [-1, 1])
+            hard_labels = tf.reshape(tf.cast(self.labels, dtype=tf.float32), [-1, 1])
             positive_cnt = tf.reduce_sum(hard_labels)
             correct_predictions = tf.reshape(correct_predictions, [1, -1])
             positive_true_cnt = tf.reshape(tf.matmul(correct_predictions, hard_labels), [])

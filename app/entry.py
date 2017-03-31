@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from preprocess.file_utils import deserialize
-from preprocess.data_helpers import vectorize_y, batch_iter, sample_eval_data
+from preprocess.data_helpers import cast_y, batch_iter, sample_eval_data
 from app.decorator import exe_time
 from models.match_lstm import MatchLstm
 from models.text_cnn import TextCnn
@@ -20,7 +20,7 @@ tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (defau
 tf.flags.DEFINE_integer('batch_size', 32, 'Batch size for training.')
 tf.flags.DEFINE_integer('sent_size', 50, 'Max sentence size.')
 tf.flags.DEFINE_integer('num_class', 2, 'Max sentence size.')
-tf.flags.DEFINE_integer('num_epochs', 5, 'Number of epochs to train for.')
+tf.flags.DEFINE_integer('num_epochs', 3, 'Number of epochs to train for.')
 tf.flags.DEFINE_integer('embedding_size', 300, 'Embedding size for embedding matrices.')
 tf.flags.DEFINE_string('data_dir', os.path.join('..', 'dataset'), 'Directory containing dataset')
 
@@ -37,8 +37,8 @@ tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on 
 tf.flags.DEFINE_string("filter_sizes", "1,2,3", "Comma-separated filter sizes (default: '3,4,5')")
 tf.flags.DEFINE_integer("num_filters", 64, "Number of filters per filter size (default: 128)")
 
-tf.flags.DEFINE_string('train_file', os.path.join('..', 'dataset', 'train_ids_0.7.bin'), '')
-tf.flags.DEFINE_string('dev_file', os.path.join('..', 'dataset', 'dev_ids_0.7.bin'), '')
+tf.flags.DEFINE_string('train_file', os.path.join('..', 'dataset', 'train_ids.bin'), '')
+tf.flags.DEFINE_string('dev_file', os.path.join('..', 'dataset', 'dev_ids.bin'), '')
 
 FLAGS = tf.flags.FLAGS
 
@@ -46,9 +46,7 @@ FLAGS = tf.flags.FLAGS
 @exe_time
 def load_data():
     train_ids, train_y = deserialize(FLAGS.train_file)
-    train_y = vectorize_y(train_y, FLAGS.num_class)
     dev_ids, dev_y = deserialize(FLAGS.dev_file)
-    dev_y = vectorize_y(dev_y, FLAGS.num_class)
     return train_ids, train_y, dev_ids, dev_y
 
 
@@ -58,14 +56,21 @@ def load_embed():
     return word_embeddings
 
 
+def unpack_x_batch(x_batch):
+    sents1, sents2 = [], []
+    for s in x_batch:
+        sents1.append(s[0])
+        sents2.append(s[1])
+    return sents1, sents2
+
+
 @exe_time
 def train_step(x_batch, y_batch, train_summary_op,
                train_summary_writer, model, sess):
     """
     A single training step
     """
-    sents1 = x_batch[:, 0].tolist()
-    sents2 = x_batch[:, 1].tolist()
+    sents1, sents2 = unpack_x_batch(x_batch)
     feed_dict = {
         model.sent1: sents1,
         model.sent2: sents2,
@@ -88,8 +93,7 @@ def dev_step(x_batch, y_batch, dev_summary_op,
     """
     Evaluates model on a dev set
     """
-    sents1 = x_batch[:, 0].tolist()
-    sents2 = x_batch[:, 1].tolist()
+    sents1, sents2 = unpack_x_batch(x_batch)
     feed_dict = {
         model.sent1: sents1,
         model.sent2: sents2,
