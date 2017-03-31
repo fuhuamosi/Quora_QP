@@ -1,16 +1,18 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from preprocess.file_utils import deserialize
-from preprocess.data_helpers import cast_y, batch_iter, sample_eval_data
+import datetime
+import os
+import time
+
+import tensorflow as tf
+
 from app.decorator import exe_time
 from models.match_lstm import MatchLstm
 from models.text_cnn import TextCnn
-
-import tensorflow as tf
-import os
-import time
-import datetime
+from preprocess.data_helpers import batch_iter, sample_eval_data, \
+    unpack_x_batch, get_extra_features
+from preprocess.file_utils import deserialize
 
 tf.flags.DEFINE_float('learning_rate', 1e-3, 'Initial learning rate')
 tf.flags.DEFINE_float('decay_ratio', 0.95, 'Learning rate decay ratio')
@@ -39,8 +41,11 @@ tf.flags.DEFINE_integer("num_filters", 64, "Number of filters per filter size (d
 
 tf.flags.DEFINE_string('train_file', os.path.join('..', 'dataset', 'train_ids.bin'), '')
 tf.flags.DEFINE_string('dev_file', os.path.join('..', 'dataset', 'dev_ids.bin'), '')
+tf.flags.DEFINE_string('idf_file', os.path.join('..', 'dataset', 'idf_dict.bin'), '')
 
 FLAGS = tf.flags.FLAGS
+
+idf_dict = deserialize(FLAGS.idf_file)
 
 
 @exe_time
@@ -56,14 +61,6 @@ def load_embed():
     return word_embeddings
 
 
-def unpack_x_batch(x_batch):
-    sents1, sents2 = [], []
-    for s in x_batch:
-        sents1.append(s[0])
-        sents2.append(s[1])
-    return sents1, sents2
-
-
 @exe_time
 def train_step(x_batch, y_batch, train_summary_op,
                train_summary_writer, model, sess):
@@ -71,11 +68,13 @@ def train_step(x_batch, y_batch, train_summary_op,
     A single training step
     """
     sents1, sents2 = unpack_x_batch(x_batch)
+    extra_features = get_extra_features(sents1, sents2, idf_dict)
     feed_dict = {
         model.sent1: sents1,
         model.sent2: sents2,
         model.labels: y_batch,
-        model.dropout_keep_prob: FLAGS.dropout_keep_prob
+        model.dropout_keep_prob: FLAGS.dropout_keep_prob,
+        model.extra_features: extra_features
     }
     _, step, summaries, loss, accuracy, recall = sess.run(
         [model.train_op, model.global_step, train_summary_op,
@@ -94,11 +93,13 @@ def dev_step(x_batch, y_batch, dev_summary_op,
     Evaluates model on a dev set
     """
     sents1, sents2 = unpack_x_batch(x_batch)
+    extra_features = get_extra_features(sents1, sents2, idf_dict)
     feed_dict = {
         model.sent1: sents1,
         model.sent2: sents2,
         model.labels: y_batch,
-        model.dropout_keep_prob: 1.0
+        model.dropout_keep_prob: 1.0,
+        model.extra_features: extra_features
     }
     step, summaries, loss, accuracy, recall = sess.run(
         [model.global_step, dev_summary_op,

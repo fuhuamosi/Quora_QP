@@ -1,15 +1,15 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import csv
 import os
-import datetime
 
 import numpy as np
 import tensorflow as tf
-import csv
 
 from app.decorator import exe_time
 from preprocess.file_utils import deserialize
+from preprocess.data_helpers import unpack_x_batch, get_extra_features
 
 # Eval Parameters
 tf.flags.DEFINE_string('data_dir', os.path.join('..', 'dataset'), 'Directory containing dataset')
@@ -26,6 +26,8 @@ tf.flags.DEFINE_string('eval_file', os.path.join('..', 'submit', 'mlstm_pred_6.c
 
 FLAGS = tf.flags.FLAGS
 
+idf_dict = deserialize(FLAGS.idf_file)
+
 
 @exe_time
 def load_data():
@@ -40,16 +42,17 @@ def cal_dup_score(x):
 
 
 @exe_time
-def test_step(x_batch, sent1, sent2, dropout_keep_prob, logits, sess):
+def test_step(x_batch, sent1, sent2, dropout_keep_prob, logits, sess, extra_feature):
     """
     Evaluates model on a dev set
     """
-    sents1 = x_batch[:, 0].tolist()
-    sents2 = x_batch[:, 1].tolist()
+    sents1, sents2 = unpack_x_batch(x_batch)
+    extra_features = get_extra_features(sents1, sents2, idf_dict)
     feed_dict = {
         sent1: sents1,
         sent2: sents2,
-        dropout_keep_prob: 1.0
+        dropout_keep_prob: 1.0,
+        extra_feature: extra_features
     }
     scores = sess.run(logits, feed_dict)
     dup_score = cal_dup_score(scores)
@@ -102,10 +105,12 @@ def main(_):
             input2 = graph.get_operation_by_name('sent2').outputs[0]
             dropout_keep_prob = graph.get_operation_by_name('dropout_keep_prob').outputs[0]
             logits = graph.get_operation_by_name('fully_connect/add').outputs[0]
+            extra_features = graph.get_operation_by_name('extra_features').outputs[0]
 
             all_predictions = np.array([])
             for x, end_index in batch_data(test_ids):
-                batch_scores = test_step(x, input1, input2, dropout_keep_prob, logits, sess)
+                batch_scores = test_step(x, input1, input2, dropout_keep_prob, logits, sess,
+                                         extra_features)
                 all_predictions = np.concatenate([all_predictions, batch_scores])
                 print('Predicting {} lines...'.format(end_index))
 

@@ -9,7 +9,8 @@ import tensorflow.contrib as contrib
 class MatchLstm:
     def __init__(self, vocab_size, sentence_size, embedding_size,
                  word_embedding, initializer=tf.truncated_normal_initializer(stddev=0.1),
-                 num_class=2, window_size=4, name='MatchLstm', initial_lr=1e-3):
+                 num_class=2, window_size=4, name='MatchLstm', initial_lr=1e-3,
+                 extra_cnt=2):
         self._vocab_size = vocab_size
         self._sentence_size = sentence_size
         self._embedding_size = embedding_size
@@ -19,6 +20,7 @@ class MatchLstm:
         self._num_class = num_class
         self._window_size = window_size
         self._initial_lr = initial_lr
+        self._extra_cnt = extra_cnt
 
         self._build_inputs_and_vars()
 
@@ -35,6 +37,8 @@ class MatchLstm:
                                      name='labels')
         self.dropout_keep_prob = tf.placeholder(shape=[], dtype=tf.float32,
                                                 name='dropout_keep_prob')
+        self.extra_features = tf.placeholder(shape=[None, self._extra_cnt], dtype=tf.float32,
+                                             name='extra_features')
 
         self._batch_size = tf.shape(self.sent1)[0]
 
@@ -82,12 +86,17 @@ class MatchLstm:
         with tf.name_scope('dropout'):
             self.h_drop = tf.nn.dropout(self.h_m_tensor, self.dropout_keep_prob)
 
+        with tf.name_scope('extra'):
+            self.combined_features = tf.concat([self.h_drop, self.extra_features],
+                                               axis=1)
+
         with tf.variable_scope('fully_connect'):
-            w1 = tf.get_variable(shape=[self._embedding_size, self._num_class],
+            w1 = tf.get_variable(shape=[self._embedding_size + self._extra_cnt,
+                                        self._num_class],
                                  initializer=contrib.layers.xavier_initializer(),
                                  name='w1')
             b1 = tf.Variable(tf.constant(0.1, shape=[self._num_class]), name="b1")
-            self.logits = tf.matmul(self.h_drop, w1) + b1
+            self.logits = tf.matmul(self.combined_features, w1) + b1
 
         with tf.name_scope('loss'):
             cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.labels,

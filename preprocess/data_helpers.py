@@ -6,6 +6,7 @@ from typing import Dict
 import os
 from preprocess.file_utils import deserialize, serialize
 from preprocess.lcs_match import get_lcs_ratio
+from app.decorator import exe_time
 
 PAD_ID = 0
 NULL_ID = 1
@@ -118,6 +119,34 @@ def remove_lcs(x):
             sent2_new.append('?')
         x_new.append([sent1_new, sent2_new])
     return x_new
+
+
+def unpack_x_batch(x_batch):
+    sents1, sents2 = [], []
+    for s in x_batch:
+        sents1.append(s[0])
+        sents2.append(s[1])
+    return sents1, sents2
+
+
+def get_idf_ratio(a, b, idf_dict):
+    common_ids = list(set(a) & set(b))
+    common_weights = sum([idf_dict.get(x, 0) for x in common_ids])
+    all_sents = a + b
+    all_weights = sum([idf_dict.get(x, 0) for x in all_sents])
+    return common_weights / all_weights
+
+
+@exe_time
+def get_extra_features(sents1, sents2, idf_dict):
+    s1 = [list(filter(lambda x: x != PAD_ID and x != NULL_ID, s)) for s in sents1]
+    s2 = [list(filter(lambda x: x != PAD_ID, s)) for s in sents2]
+    lcs_ratios = [get_lcs_ratio(a, b) for a, b in zip(s1, s2)]
+    idf_ratios = [get_idf_ratio(a, b, idf_dict) for a, b in zip(s1, s2)]
+
+    extra_features = [[a, b] for a, b in
+                      zip(lcs_ratios, idf_ratios)]
+    return extra_features
 
 
 def main():
