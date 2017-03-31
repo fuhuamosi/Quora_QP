@@ -52,7 +52,7 @@ class MatchLstm:
             self._word_embedding = tf.get_variable(name='word_embedding',
                                                    shape=[self._vocab_size, self._embedding_size],
                                                    initializer=tf.constant_initializer(self._we),
-                                                   trainable=True)
+                                                   trainable=False)
 
         self._embed_pre = self._embed_inputs(self.sent1, self._word_embedding, 'embed_pre')
         self._embed_hyp = self._embed_inputs(self.sent2, self._word_embedding, 'embed_hyp')
