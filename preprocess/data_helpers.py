@@ -137,7 +137,6 @@ def get_idf_ratio(a, b, idf_dict):
     return common_weights / (all_weights + 1e-3)
 
 
-
 def get_extra_features(sents1, sents2, idf_dict):
     s1 = [list(filter(lambda x: x != PAD_ID and x != NULL_ID, s)) for s in sents1]
     s2 = [list(filter(lambda x: x != PAD_ID, s)) for s in sents2]
