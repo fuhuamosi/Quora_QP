@@ -11,7 +11,7 @@ from app.decorator import exe_time
 from models.match_lstm import MatchLstm
 from models.text_cnn import TextCnn
 from preprocess.data_helpers import batch_iter, sample_eval_data, \
-    unpack_x_batch, get_extra_features
+    unpack_x_batch, get_extra_features, remove_common_words
 from preprocess.file_utils import deserialize
 
 tf.flags.DEFINE_float('learning_rate', 1e-3, 'Initial learning rate')
@@ -69,6 +69,7 @@ def train_step(x_batch, y_batch, train_summary_op,
     """
     sents1, sents2 = unpack_x_batch(x_batch)
     extra_features = get_extra_features(sents1, sents2, idf_dict)
+    sents1, sents2 = remove_common_words(sents1, sents2)
     feed_dict = {
         model.sent1: sents1,
         model.sent2: sents2,
@@ -94,6 +95,7 @@ def dev_step(x_batch, y_batch, dev_summary_op,
     """
     sents1, sents2 = unpack_x_batch(x_batch)
     extra_features = get_extra_features(sents1, sents2, idf_dict)
+    sents1, sents2 = remove_common_words(sents1, sents2)
     feed_dict = {
         model.sent1: sents1,
         model.sent2: sents2,

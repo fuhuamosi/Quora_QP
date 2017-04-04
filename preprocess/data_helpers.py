@@ -105,20 +105,32 @@ def transform_y(x, y, alpha):
     return y
 
 
-def remove_lcs(x):
-    x_new = []
-    for sent1, sent2 in x:
-        word_set1 = set(sent1)
-        word_set2 = set(sent2)
-        common_word_set = word_set1 & word_set2
-        sent1_new = list(filter(lambda w: w not in common_word_set, sent1))
-        sent2_new = list(filter(lambda w: w not in common_word_set, sent2))
-        if len(sent1_new) == 0:
-            sent1_new.append('?')
-        if len(sent2_new) == 0:
-            sent2_new.append('?')
-        x_new.append([sent1_new, sent2_new])
-    return x_new
+def remove_common_words(sents1, sents2):
+    new_sents1, new_sents2 = [], []
+    length = len(sents1[0])
+    for s1, s2 in zip(sents1, sents2):
+        new_s1 = []
+        new_s2 = []
+        common_words = set(s1) & set(s2)
+
+        for w in s1:
+            if w not in common_words:
+                new_s1.append(w)
+        for w in s2:
+            if w not in common_words:
+                new_s2.append(w)
+
+        if len(new_s1) == 0:
+            new_s1.append(NULL_ID)
+        if len(new_s2) == 0:
+            new_s2.append(NULL_ID)
+
+        new_s1.extend([PAD_ID] * (length - len(new_s1)))
+        new_s2.extend([PAD_ID] * (length - len(new_s2)))
+
+        new_sents1.append(new_s1)
+        new_sents2.append(new_s2)
+    return new_sents1, new_sents2
 
 
 def unpack_x_batch(x_batch):
@@ -156,18 +168,15 @@ def main():
     word_embeddings = deserialize(os.path.join(data_dir, 'word_embeddings_glove.bin'))
     oov_embed_size = len(word_embeddings) - len(word2index)
 
-    # # train_x = remove_lcs(train_x)
-    # train_ids = [[vectorize_sent(q, word2index, oov_embed_size, i, 50) for i, q in enumerate(x)]
-    #              for x in train_x]
-    # serialize([train_ids, train_y], os.path.join(data_dir, 'train_ids.bin'))
-    #
-    # # dev_x = remove_lcs(dev_x)
-    # dev_ids = [[vectorize_sent(q, word2index, oov_embed_size, i, 50) for i, q in enumerate(x)]
-    #            for x in dev_x]
-    # serialize([dev_ids, dev_y], os.path.join(data_dir, 'dev_ids.bin'))
+    train_ids = [[vectorize_sent(q, word2index, oov_embed_size, i, 50) for i, q in enumerate(x)]
+                 for x in train_x]
+    serialize([train_ids, train_y], os.path.join(data_dir, 'train_ids.bin'))
+
+    dev_ids = [[vectorize_sent(q, word2index, oov_embed_size, i, 50) for i, q in enumerate(x)]
+               for x in dev_x]
+    serialize([dev_ids, dev_y], os.path.join(data_dir, 'dev_ids.bin'))
 
     test_x = deserialize(os.path.join(data_dir, 'test.bin'))
-    # test_x = remove_lcs(test_x)
     test_ids = [[vectorize_sent(q, word2index, oov_embed_size, i, 50) for i, q in enumerate(x)]
                 for x in test_x]
     serialize(test_ids, os.path.join(data_dir, 'test_ids.bin'))
