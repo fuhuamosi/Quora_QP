@@ -11,7 +11,7 @@ from app.decorator import exe_time
 from models.match_lstm import MatchLstm
 from models.text_cnn import TextCnn
 from preprocess.data_helpers import batch_iter, sample_eval_data, \
-    unpack_x_batch, get_extra_features, remove_common_words
+    unpack_x_batch, get_extra_features, remove_rare_words
 from preprocess.file_utils import deserialize
 
 tf.flags.DEFINE_float('learning_rate', 1e-3, 'Initial learning rate')
@@ -42,10 +42,13 @@ tf.flags.DEFINE_integer("num_filters", 64, "Number of filters per filter size (d
 tf.flags.DEFINE_string('train_file', os.path.join('..', 'dataset', 'train_ids.bin'), '')
 tf.flags.DEFINE_string('dev_file', os.path.join('..', 'dataset', 'dev_ids.bin'), '')
 tf.flags.DEFINE_string('idf_file', os.path.join('..', 'dataset', 'idf_dict.bin'), '')
+tf.flags.DEFINE_string('embed_file', os.path.join('..', 'dataset', 'word_embeddings_glove.bin'), '')
+tf.flags.DEFINE_string('word2inx_file', os.path.join('..', 'dataset', 'word2index_glove.bin'), '')
 
 FLAGS = tf.flags.FLAGS
 
 idf_dict = deserialize(FLAGS.idf_file)
+max_id = len(deserialize(FLAGS.word2inx_file))
 
 
 @exe_time
@@ -57,7 +60,7 @@ def load_data():
 
 @exe_time
 def load_embed():
-    word_embeddings = deserialize(os.path.join(FLAGS.data_dir, 'word_embeddings_glove.bin'))
+    word_embeddings = deserialize(FLAGS.embed_file)
     return word_embeddings
 
 
@@ -69,7 +72,7 @@ def train_step(x_batch, y_batch, train_summary_op,
     """
     sents1, sents2 = unpack_x_batch(x_batch)
     extra_features = get_extra_features(sents1, sents2, idf_dict)
-    sents1, sents2 = remove_common_words(sents1, sents2)
+    sents1, sents2 = remove_rare_words(sents1, sents2, max_id)
     feed_dict = {
         model.sent1: sents1,
         model.sent2: sents2,
@@ -95,7 +98,7 @@ def dev_step(x_batch, y_batch, dev_summary_op,
     """
     sents1, sents2 = unpack_x_batch(x_batch)
     extra_features = get_extra_features(sents1, sents2, idf_dict)
-    sents1, sents2 = remove_common_words(sents1, sents2)
+    sents1, sents2 = remove_rare_words(sents1, sents2, max_id)
     feed_dict = {
         model.sent1: sents1,
         model.sent2: sents2,

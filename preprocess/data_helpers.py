@@ -133,6 +133,33 @@ def remove_common_words(sents1, sents2):
     return new_sents1, new_sents2
 
 
+def remove_rare_words(sents1, sents2, max_id):
+    new_sents1, new_sents2 = [], []
+    length = len(sents1[0])
+    for s1, s2 in zip(sents1, sents2):
+        new_s1 = []
+        new_s2 = []
+
+        for w in s1:
+            if w < max_id:
+                new_s1.append(w)
+        for w in s2:
+            if w < max_id:
+                new_s2.append(w)
+
+        if len(new_s1) == 0:
+            new_s1.append(NULL_ID)
+        if len(new_s2) == 0:
+            new_s2.append(NULL_ID)
+
+        new_s1.extend([PAD_ID] * (length - len(new_s1)))
+        new_s2.extend([PAD_ID] * (length - len(new_s2)))
+
+        new_sents1.append(new_s1)
+        new_sents2.append(new_s2)
+    return new_sents1, new_sents2
+
+
 def unpack_x_batch(x_batch):
     sents1, sents2 = [], []
     for s in x_batch:

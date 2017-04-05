@@ -9,7 +9,7 @@ import tensorflow as tf
 
 from app.decorator import exe_time
 from preprocess.file_utils import deserialize
-from preprocess.data_helpers import unpack_x_batch, get_extra_features, remove_common_words
+from preprocess.data_helpers import unpack_x_batch, get_extra_features, remove_rare_words
 
 # Eval Parameters
 tf.flags.DEFINE_string('data_dir', os.path.join('..', 'dataset'), 'Directory containing dataset')
@@ -22,12 +22,14 @@ tf.flags.DEFINE_string("checkpoint_dir", os.path.join('..', 'runs',
                                                       '1490978980', 'checkpoints')
                        , "Checkpoint directory from training run")
 tf.flags.DEFINE_string('test_file', os.path.join('..', 'dataset', 'test_ids.bin'), '')
-tf.flags.DEFINE_string('eval_file', os.path.join('..', 'submit', 'mlstm_pred_8.csv'), '')
+tf.flags.DEFINE_string('eval_file', os.path.join('..', 'submit', 'mlstm_pred_9.csv'), '')
 tf.flags.DEFINE_string('idf_file', os.path.join('..', 'dataset', 'idf_dict.bin'), '')
+tf.flags.DEFINE_string('word2inx_file', os.path.join('..', 'dataset', 'word2index_glove.bin'), '')
 
 FLAGS = tf.flags.FLAGS
 
 idf_dict = deserialize(FLAGS.idf_file)
+max_id = len(deserialize(FLAGS.word2inx_file))
 
 
 @exe_time
@@ -49,7 +51,7 @@ def test_step(x_batch, sent1, sent2, dropout_keep_prob, logits, sess, extra_feat
     """
     sents1, sents2 = unpack_x_batch(x_batch)
     extra_features = get_extra_features(sents1, sents2, idf_dict)
-    sents1, sents2 = remove_common_words(sents1, sents2)
+    sents1, sents2 = remove_rare_words(sents1, sents2, max_id)
     feed_dict = {
         sent1: sents1,
         sent2: sents2,
