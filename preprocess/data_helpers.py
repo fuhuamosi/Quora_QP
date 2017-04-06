@@ -184,9 +184,9 @@ def get_levenshtein_ratio(a, b):
         min_dis[i][0] = i
     for i in range(1, len2 + 1):
         min_dis[0][i] = i
-    for i in range(1, len1):
-        for j in range(1, len2):
-            if a[i] != b[j]:
+    for i in range(1, len1 + 1):
+        for j in range(1, len2 + 1):
+            if a[i - 1] != b[j - 1]:
                 min_dis[i][j] = min(min_dis[i - 1][j - 1], min_dis[i - 1][j], min_dis[i][j - 1]) + 1
             else:
                 min_dis[i][j] = min_dis[i - 1][j - 1]
