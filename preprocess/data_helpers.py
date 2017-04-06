@@ -169,11 +169,28 @@ def unpack_x_batch(x_batch):
 
 
 def get_idf_ratio(a, b, idf_dict):
-    common_ids = list(set(a) & set(b))
+    common_ids = set(a) & set(b)
     common_weights = sum([idf_dict.get(x, 0) for x in common_ids])
-    all_sents = a + b
-    all_weights = sum([idf_dict.get(x, 0) for x in all_sents])
+    all_words = set(a) | set(b)
+    all_weights = sum([idf_dict.get(x, 0) for x in all_words])
     return common_weights / (all_weights + 1e-3)
+
+
+def get_levenshtein_ratio(a, b):
+    len1 = len(a)
+    len2 = len(b)
+    min_dis = np.zeros(shape=[len1 + 1, len2 + 1], dtype=np.int32)
+    for i in range(1, len1 + 1):
+        min_dis[i][0] = i
+    for i in range(1, len2 + 1):
+        min_dis[0][i] = i
+    for i in range(1, len1):
+        for j in range(1, len2):
+            if a[i] != b[j]:
+                min_dis[i][j] = min(min_dis[i - 1][j - 1], min_dis[i - 1][j], min_dis[i][j - 1]) + 1
+            else:
+                min_dis[i][j] = min_dis[i - 1][j - 1]
+    return min_dis[len1][len2] / ((len1 + len2) / 2)
 
 
 def get_extra_features(sents1, sents2, idf_dict):
@@ -181,9 +198,10 @@ def get_extra_features(sents1, sents2, idf_dict):
     s2 = [list(filter(lambda x: x != PAD_ID, s)) for s in sents2]
     lcs_ratios = [get_lcs_ratio(a, b) for a, b in zip(s1, s2)]
     idf_ratios = [get_idf_ratio(a, b, idf_dict) for a, b in zip(s1, s2)]
+    levenshtein_ratios = [get_levenshtein_ratio(a, b) for a, b in zip(s1, s2)]
 
-    extra_features = [[a, b] for a, b in
-                      zip(lcs_ratios, idf_ratios)]
+    extra_features = [[a, b, c] for a, b, c in
+                      zip(lcs_ratios, idf_ratios, levenshtein_ratios)]
     return extra_features
 
 

@@ -125,7 +125,8 @@ def get_model(word_embeddings, model_name):
                           embedding_size=FLAGS.embedding_size,
                           word_embedding=word_embeddings,
                           initial_lr=FLAGS.learning_rate,
-                          num_class=FLAGS.num_class)
+                          num_class=FLAGS.num_class,
+                          extra_cnt=3)
     elif model_name == 'text_cnn':
         model = TextCnn(vocab_size=len(word_embeddings),
                         sentence_size=FLAGS.sent_size,
