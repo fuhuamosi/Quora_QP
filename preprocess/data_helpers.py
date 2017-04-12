@@ -228,9 +228,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
-    word_embeddings = deserialize(os.path.join(data_dir, 'word_embeddings_word2vec.bin'))
-    for i in range(len(word_embeddings)):
-        if type(word_embeddings[i]) != list:
-            word_embeddings[i] = word_embeddings[i].tolist()
-    serialize(word_embeddings, os.path.join(data_dir, 'word_embeddings_word2vec2.bin'))
+    main()
