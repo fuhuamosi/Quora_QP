@@ -14,7 +14,7 @@ from preprocess.data_helpers import batch_iter, sample_eval_data, \
     unpack_x_batch, get_extra_features, remove_rare_words
 from preprocess.file_utils import deserialize
 
-tf.flags.DEFINE_float('learning_rate', 1e-3, 'Initial learning rate')
+tf.flags.DEFINE_float('learning_rate', 5e-4, 'Initial learning rate')
 tf.flags.DEFINE_float('decay_ratio', 0.95, 'Learning rate decay ratio')
 tf.flags.DEFINE_float('max_grad_norm', 40.0, 'Clip gradients to this norm.')
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
@@ -22,7 +22,7 @@ tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (defau
 tf.flags.DEFINE_integer('batch_size', 32, 'Batch size for training.')
 tf.flags.DEFINE_integer('sent_size', 50, 'Max sentence size.')
 tf.flags.DEFINE_integer('num_class', 2, 'Max sentence size.')
-tf.flags.DEFINE_integer('num_epochs', 3, 'Number of epochs to train for.')
+tf.flags.DEFINE_integer('num_epochs', 5, 'Number of epochs to train for.')
 tf.flags.DEFINE_integer('embedding_size', 300, 'Embedding size for embedding matrices.')
 tf.flags.DEFINE_string('data_dir', os.path.join('..', 'dataset'), 'Directory containing dataset')
 
@@ -42,7 +42,7 @@ tf.flags.DEFINE_integer("num_filters", 64, "Number of filters per filter size (d
 tf.flags.DEFINE_string('train_file', os.path.join('..', 'dataset', 'train_ids.bin'), '')
 tf.flags.DEFINE_string('dev_file', os.path.join('..', 'dataset', 'dev_ids.bin'), '')
 tf.flags.DEFINE_string('idf_file', os.path.join('..', 'dataset', 'idf_dict.bin'), '')
-tf.flags.DEFINE_string('embed_file', os.path.join('..', 'dataset', 'word_embeddings_word2vec2.bin'), '')
+tf.flags.DEFINE_string('embed_file', os.path.join('..', 'dataset', 'word_embeddings_word2vec.bin'), '')
 tf.flags.DEFINE_string('word2inx_file', os.path.join('..', 'dataset', 'word2index_word2vec.bin'), '')
 
 FLAGS = tf.flags.FLAGS
