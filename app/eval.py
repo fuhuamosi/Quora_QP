@@ -22,9 +22,9 @@ tf.flags.DEFINE_string("checkpoint_dir", os.path.join('..', 'runs',
                                                       '1490978980', 'checkpoints')
                        , "Checkpoint directory from training run")
 tf.flags.DEFINE_string('test_file', os.path.join('..', 'dataset', 'test_ids.bin'), '')
-tf.flags.DEFINE_string('eval_file', os.path.join('..', 'submit', 'mlstm_pred_9.csv'), '')
+tf.flags.DEFINE_string('eval_file', os.path.join('..', 'submit', 'mlstm_pred_12.csv'), '')
 tf.flags.DEFINE_string('idf_file', os.path.join('..', 'dataset', 'idf_dict.bin'), '')
-tf.flags.DEFINE_string('word2inx_file', os.path.join('..', 'dataset', 'word2index_glove.bin'), '')
+tf.flags.DEFINE_string('word2inx_file', os.path.join('..', 'dataset', 'word2index_word2vec.bin'), '')
 
 FLAGS = tf.flags.FLAGS
 

@@ -42,8 +42,8 @@ tf.flags.DEFINE_integer("num_filters", 64, "Number of filters per filter size (d
 tf.flags.DEFINE_string('train_file', os.path.join('..', 'dataset', 'train_ids.bin'), '')
 tf.flags.DEFINE_string('dev_file', os.path.join('..', 'dataset', 'dev_ids.bin'), '')
 tf.flags.DEFINE_string('idf_file', os.path.join('..', 'dataset', 'idf_dict.bin'), '')
-tf.flags.DEFINE_string('embed_file', os.path.join('..', 'dataset', 'word_embeddings_glove.bin'), '')
-tf.flags.DEFINE_string('word2inx_file', os.path.join('..', 'dataset', 'word2index_glove.bin'), '')
+tf.flags.DEFINE_string('embed_file', os.path.join('..', 'dataset', 'word_embeddings_word2vec2.bin'), '')
+tf.flags.DEFINE_string('word2inx_file', os.path.join('..', 'dataset', 'word2index_word2vec.bin'), '')
 
 FLAGS = tf.flags.FLAGS
 

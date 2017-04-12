@@ -209,8 +209,8 @@ def main():
     train_x, train_y = deserialize(os.path.join(data_dir, 'train.bin'))
     dev_x, dev_y = deserialize(os.path.join(data_dir, 'dev.bin'))
 
-    word2index = deserialize(os.path.join(data_dir, 'word2index_glove.bin'))
-    word_embeddings = deserialize(os.path.join(data_dir, 'word_embeddings_glove.bin'))
+    word2index = deserialize(os.path.join(data_dir, 'word2index_word2vec.bin'))
+    word_embeddings = deserialize(os.path.join(data_dir, 'word_embeddings_word2vec.bin'))
     oov_embed_size = len(word_embeddings) - len(word2index)
 
     train_ids = [[vectorize_sent(q, word2index, oov_embed_size, i, 50) for i, q in enumerate(x)]
@@ -228,4 +228,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    word_embeddings = deserialize(os.path.join(data_dir, 'word_embeddings_word2vec.bin'))
+    for i in range(len(word_embeddings)):
+        if type(word_embeddings[i]) != list:
+            word_embeddings[i] = word_embeddings[i].tolist()
+    serialize(word_embeddings, os.path.join(data_dir, 'word_embeddings_word2vec2.bin'))
