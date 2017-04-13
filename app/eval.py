@@ -9,7 +9,8 @@ import tensorflow as tf
 
 from app.decorator import exe_time
 from preprocess.file_utils import deserialize
-from preprocess.data_helpers import unpack_x_batch, get_extra_features, remove_rare_words
+from preprocess.data_helpers import unpack_x_batch, get_extra_features, remove_rare_stop_words
+from nltk.corpus import stopwords
 
 # Eval Parameters
 tf.flags.DEFINE_string('data_dir', os.path.join('..', 'dataset'), 'Directory containing dataset')
@@ -24,12 +25,17 @@ tf.flags.DEFINE_string("checkpoint_dir", os.path.join('..', 'runs',
 tf.flags.DEFINE_string('test_file', os.path.join('..', 'dataset', 'test_ids.bin'), '')
 tf.flags.DEFINE_string('eval_file', os.path.join('..', 'submit', 'mlstm_pred_12.csv'), '')
 tf.flags.DEFINE_string('idf_file', os.path.join('..', 'dataset', 'idf_dict.bin'), '')
-tf.flags.DEFINE_string('word2inx_file', os.path.join('..', 'dataset', 'word2index_word2vec.bin'), '')
+tf.flags.DEFINE_string('word2inx_file', os.path.join('..', 'dataset', 'word2index_word2vec.bin'),
+                       '')
 
 FLAGS = tf.flags.FLAGS
 
 idf_dict = deserialize(FLAGS.idf_file)
 max_id = len(deserialize(FLAGS.word2inx_file))
+word2inx = deserialize(FLAGS.word2inx_file)
+stops = set(stopwords.words('english'))
+stops_id = [word2inx[stop] if stop in word2inx else -1 for stop in stops]
+word_embeddings = deserialize(FLAGS.embed_file)
 
 
 @exe_time
@@ -50,8 +56,8 @@ def test_step(x_batch, sent1, sent2, dropout_keep_prob, logits, sess, extra_feat
     Evaluates model on a dev set
     """
     sents1, sents2 = unpack_x_batch(x_batch)
-    extra_features = get_extra_features(sents1, sents2, idf_dict)
-    sents1, sents2 = remove_rare_words(sents1, sents2, max_id)
+    sents1, sents2 = remove_rare_stop_words(sents1, sents2, max_id, stops_id)
+    extra_features = get_extra_features(sents1, sents2, idf_dict, word_embeddings)
     feed_dict = {
         sent1: sents1,
         sent2: sents2,

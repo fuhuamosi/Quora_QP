@@ -11,10 +11,11 @@ from app.decorator import exe_time
 from models.match_lstm import MatchLstm
 from models.text_cnn import TextCnn
 from preprocess.data_helpers import batch_iter, sample_eval_data, \
-    unpack_x_batch, get_extra_features, remove_rare_words
+    unpack_x_batch, get_extra_features, remove_rare_stop_words
 from preprocess.file_utils import deserialize
+from nltk.corpus import stopwords
 
-tf.flags.DEFINE_float('learning_rate', 1e-3, 'Initial learning rate')
+tf.flags.DEFINE_float('learning_rate', 5e-4, 'Initial learning rate')
 tf.flags.DEFINE_float('decay_ratio', 0.95, 'Learning rate decay ratio')
 tf.flags.DEFINE_float('max_grad_norm', 40.0, 'Clip gradients to this norm.')
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
@@ -22,7 +23,7 @@ tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (defau
 tf.flags.DEFINE_integer('batch_size', 32, 'Batch size for training.')
 tf.flags.DEFINE_integer('sent_size', 50, 'Max sentence size.')
 tf.flags.DEFINE_integer('num_class', 2, 'Max sentence size.')
-tf.flags.DEFINE_integer('num_epochs', 3, 'Number of epochs to train for.')
+tf.flags.DEFINE_integer('num_epochs', 4, 'Number of epochs to train for.')
 tf.flags.DEFINE_integer('embedding_size', 300, 'Embedding size for embedding matrices.')
 tf.flags.DEFINE_string('data_dir', os.path.join('..', 'dataset'), 'Directory containing dataset')
 
@@ -42,13 +43,19 @@ tf.flags.DEFINE_integer("num_filters", 64, "Number of filters per filter size (d
 tf.flags.DEFINE_string('train_file', os.path.join('..', 'dataset', 'train_ids.bin'), '')
 tf.flags.DEFINE_string('dev_file', os.path.join('..', 'dataset', 'dev_ids.bin'), '')
 tf.flags.DEFINE_string('idf_file', os.path.join('..', 'dataset', 'idf_dict.bin'), '')
-tf.flags.DEFINE_string('embed_file', os.path.join('..', 'dataset', 'word_embeddings_word2vec2.bin'), '')
-tf.flags.DEFINE_string('word2inx_file', os.path.join('..', 'dataset', 'word2index_word2vec.bin'), '')
+tf.flags.DEFINE_string('embed_file', os.path.join('..', 'dataset', 'word_embeddings_word2vec.bin'),
+                       '')
+tf.flags.DEFINE_string('word2inx_file', os.path.join('..', 'dataset', 'word2index_word2vec.bin'),
+                       '')
 
 FLAGS = tf.flags.FLAGS
 
 idf_dict = deserialize(FLAGS.idf_file)
 max_id = len(deserialize(FLAGS.word2inx_file))
+word2inx = deserialize(FLAGS.word2inx_file)
+stops = set(stopwords.words('english'))
+stops_id = [word2inx[stop] if stop in word2inx else -1 for stop in stops]
+word_embeddings = deserialize(FLAGS.embed_file)
 
 
 @exe_time
@@ -59,20 +66,14 @@ def load_data():
 
 
 @exe_time
-def load_embed():
-    word_embeddings = deserialize(FLAGS.embed_file)
-    return word_embeddings
-
-
-@exe_time
 def train_step(x_batch, y_batch, train_summary_op,
                train_summary_writer, model, sess):
     """
     A single training step
     """
     sents1, sents2 = unpack_x_batch(x_batch)
-    extra_features = get_extra_features(sents1, sents2, idf_dict)
-    sents1, sents2 = remove_rare_words(sents1, sents2, max_id)
+    sents1, sents2 = remove_rare_stop_words(sents1, sents2, max_id, stops_id)
+    extra_features = get_extra_features(sents1, sents2, idf_dict, word_embeddings)
     feed_dict = {
         model.sent1: sents1,
         model.sent2: sents2,
@@ -97,8 +98,8 @@ def dev_step(x_batch, y_batch, dev_summary_op,
     Evaluates model on a dev set
     """
     sents1, sents2 = unpack_x_batch(x_batch)
-    extra_features = get_extra_features(sents1, sents2, idf_dict)
-    sents1, sents2 = remove_rare_words(sents1, sents2, max_id)
+    sents1, sents2 = remove_rare_stop_words(sents1, sents2, max_id, stops_id)
+    extra_features = get_extra_features(sents1, sents2, idf_dict, word_embeddings)
     feed_dict = {
         model.sent1: sents1,
         model.sent2: sents2,
@@ -117,7 +118,7 @@ def dev_step(x_batch, y_batch, dev_summary_op,
 
 
 @exe_time
-def get_model(word_embeddings, model_name):
+def get_model(model_name):
     model = None
     if model_name == 'match_lstm':
         model = MatchLstm(vocab_size=len(word_embeddings),
@@ -126,7 +127,7 @@ def get_model(word_embeddings, model_name):
                           word_embedding=word_embeddings,
                           initial_lr=FLAGS.learning_rate,
                           num_class=FLAGS.num_class,
-                          extra_cnt=3)
+                          extra_cnt=4)
     elif model_name == 'text_cnn':
         model = TextCnn(vocab_size=len(word_embeddings),
                         sentence_size=FLAGS.sent_size,
@@ -141,7 +142,6 @@ def get_model(word_embeddings, model_name):
 
 def main(_):
     train_ids, train_y, dev_ids, dev_y = load_data()
-    word_embeddings = load_embed()
 
     # Training
 
@@ -152,7 +152,7 @@ def main(_):
         sess = tf.Session(config=session_conf)
 
         with sess.as_default():
-            model = get_model(word_embeddings, 'match_lstm')
+            model = get_model('match_lstm')
 
             timestamp = str(int(time.time()))
             out_dir = os.path.abspath(os.path.join('..', 'runs', timestamp))
