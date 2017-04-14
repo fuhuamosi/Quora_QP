@@ -6,6 +6,7 @@ from typing import Dict
 import os
 from preprocess.file_utils import deserialize, serialize
 from preprocess.lcs_match import get_lcs_ratio
+import math
 from app.decorator import exe_time
 
 PAD_ID = 0
@@ -141,10 +142,10 @@ def remove_rare_stop_words(sents1, sents2, max_id, stops_id):
         new_s2 = []
 
         for w in s1:
-            if w < max_id and w not in stops_id:
+            if w < max_id:
                 new_s1.append(w)
         for w in s2:
-            if w < max_id and w not in stops_id:
+            if w < max_id:
                 new_s2.append(w)
 
         if len(new_s1) == 0:
@@ -203,7 +204,7 @@ def get_move_ratio(a, b, word_embeddings):
                 embed_w2 = np.array(word_embeddings[w2])
                 min_dis = min(min_dis, np.linalg.norm(embed_w1 - embed_w2))
             all_dis += min_dis
-        return all_dis / (len(x) + 1e-4)
+        return all_dis / (len(x) + 1e-6) / 10
 
     dis1 = get_move(a, b)
     dis2 = get_move(b, a)

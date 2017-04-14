@@ -50,7 +50,7 @@ def get_lcs_ratio(seq1, seq2):
             long_seq_pos.extend(word_inv_dict[word])
     max_lis = find_max_lis(long_seq_pos)
     average_len = (len(seq1) + len(seq2)) / 2
-    return max_lis / average_len
+    return max_lis / (average_len + 1e-4)
 
 
 if __name__ == '__main__':

@@ -54,7 +54,7 @@ idf_dict = deserialize(FLAGS.idf_file)
 max_id = len(deserialize(FLAGS.word2inx_file))
 word2inx = deserialize(FLAGS.word2inx_file)
 stops = set(stopwords.words('english'))
-stops_id = [word2inx[stop] if stop in word2inx else -1 for stop in stops]
+stops_id = set([word2inx[stop] if stop in word2inx else -1 for stop in stops])
 word_embeddings = deserialize(FLAGS.embed_file)
 
 
