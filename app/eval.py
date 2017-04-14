@@ -9,7 +9,7 @@ import tensorflow as tf
 
 from app.decorator import exe_time
 from preprocess.file_utils import deserialize
-from preprocess.data_helpers import unpack_x_batch, get_extra_features, remove_rare_stop_words
+from preprocess.data_helpers import unpack_x_batch, get_extra_features, remove_rare_words
 from nltk.corpus import stopwords
 
 # Eval Parameters
@@ -56,8 +56,8 @@ def test_step(x_batch, sent1, sent2, dropout_keep_prob, logits, sess, extra_feat
     Evaluates model on a dev set
     """
     sents1, sents2 = unpack_x_batch(x_batch)
-    sents1, sents2 = remove_rare_stop_words(sents1, sents2, max_id, stops_id)
-    extra_features = get_extra_features(sents1, sents2, idf_dict, word_embeddings)
+    sents1, sents2 = remove_rare_words(sents1, sents2, max_id)
+    extra_features = get_extra_features(sents1, sents2, idf_dict, word_embeddings, stops_id)
     feed_dict = {
         sent1: sents1,
         sent2: sents2,

@@ -134,7 +134,7 @@ def remove_common_words(sents1, sents2):
     return new_sents1, new_sents2
 
 
-def remove_rare_stop_words(sents1, sents2, max_id, stops_id):
+def remove_rare_words(sents1, sents2, max_id):
     new_sents1, new_sents2 = [], []
     length = len(sents1[0])
     for s1, s2 in zip(sents1, sents2):
@@ -194,7 +194,7 @@ def get_levenshtein_ratio(a, b):
     return min_dis[len1][len2] / ((len1 + len2) / 2)
 
 
-def get_move_ratio(a, b, word_embeddings):
+def get_move_ratio(a, b, word_embeddings, stops_id):
     def get_move(x, y):
         all_dis = 0
         for w1 in x:
@@ -206,18 +206,20 @@ def get_move_ratio(a, b, word_embeddings):
             all_dis += min_dis
         return all_dis / (len(x) + 1e-6) / 10
 
+    a = list(filter(lambda x: x not in stops_id, a))
+    b = list(filter(lambda x: x not in stops_id, b))
     dis1 = get_move(a, b)
     dis2 = get_move(b, a)
     return max(dis1, dis2)
 
 
-def get_extra_features(sents1, sents2, idf_dict, word_embeddings):
+def get_extra_features(sents1, sents2, idf_dict, word_embeddings, stops_id):
     s1 = [list(filter(lambda x: x != PAD_ID and x != NULL_ID, s)) for s in sents1]
     s2 = [list(filter(lambda x: x != PAD_ID, s)) for s in sents2]
     lcs_ratios = [get_lcs_ratio(a, b) for a, b in zip(s1, s2)]
     idf_ratios = [get_idf_ratio(a, b, idf_dict) for a, b in zip(s1, s2)]
     levenshtein_ratios = [get_levenshtein_ratio(a, b) for a, b in zip(s1, s2)]
-    move_ratios = [get_move_ratio(a, b, word_embeddings) for a, b in zip(s1, s2)]
+    move_ratios = [get_move_ratio(a, b, word_embeddings, stops_id) for a, b in zip(s1, s2)]
 
     extra_features = [[a, b, c, d] for a, b, c, d in
                       zip(lcs_ratios, idf_ratios, levenshtein_ratios, move_ratios)]
