@@ -206,10 +206,10 @@ def get_move_ratio(a, b, word_embeddings, stops_id):
             all_dis += min_dis
         return all_dis / (len(x) + 1e-6) / 10
 
-    a = list(filter(lambda x: x not in stops_id, a))
-    b = list(filter(lambda x: x not in stops_id, b))
-    dis1 = get_move(a, b)
-    dis2 = get_move(b, a)
+    a2 = list(filter(lambda x: x not in stops_id, a))
+    b2 = list(filter(lambda x: x not in stops_id, b))
+    dis1 = get_move(a2, b2)
+    dis2 = get_move(b2, a2)
     return max(dis1, dis2)
 
 
