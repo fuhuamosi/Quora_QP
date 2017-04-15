@@ -20,12 +20,14 @@ tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device 
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
 tf.flags.DEFINE_string("checkpoint_dir", os.path.join('..', 'runs',
-                                                      '1490978980', 'checkpoints')
+                                                      '1492192303', 'checkpoints')
                        , "Checkpoint directory from training run")
 tf.flags.DEFINE_string('test_file', os.path.join('..', 'dataset', 'test_ids.bin'), '')
-tf.flags.DEFINE_string('eval_file', os.path.join('..', 'submit', 'mlstm_pred_12.csv'), '')
+tf.flags.DEFINE_string('eval_file', os.path.join('..', 'submit', 'mlstm_pred_1492192303.csv'), '')
 tf.flags.DEFINE_string('idf_file', os.path.join('..', 'dataset', 'idf_dict.bin'), '')
 tf.flags.DEFINE_string('word2inx_file', os.path.join('..', 'dataset', 'word2index_glove.bin'),
+                       '')
+tf.flags.DEFINE_string('embed_file', os.path.join('..', 'dataset', 'word_embeddings_glove.bin'),
                        '')
 
 FLAGS = tf.flags.FLAGS
