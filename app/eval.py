@@ -58,8 +58,8 @@ def test_step(x_batch, sent1, sent2, dropout_keep_prob, logits, sess, extra_feat
     Evaluates model on a dev set
     """
     sents1, sents2 = unpack_x_batch(x_batch)
-    sents1, sents2 = remove_rare_words(sents1, sents2, max_id)
     extra_features = get_extra_features(sents1, sents2, idf_dict, word_embeddings, stops_id)
+    sents1, sents2 = remove_rare_words(sents1, sents2, max_id)
     feed_dict = {
         sent1: sents1,
         sent2: sents2,

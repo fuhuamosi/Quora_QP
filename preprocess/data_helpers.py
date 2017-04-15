@@ -210,7 +210,8 @@ def get_move_ratio(a, b, word_embeddings, stops_id):
     b2 = list(filter(lambda x: x not in stops_id, b))
     dis1 = get_move(a2, b2)
     dis2 = get_move(b2, a2)
-    return max(dis1, dis2)
+    average_dis = (dis1 + dis2) / 2
+    return average_dis
 
 
 def get_extra_features(sents1, sents2, idf_dict, word_embeddings, stops_id):
