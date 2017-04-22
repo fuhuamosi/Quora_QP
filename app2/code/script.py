@@ -13,6 +13,7 @@ import re
 import csv
 import codecs
 import numpy as np
+
 np.random.seed(1)
 import pandas as pd
 
@@ -35,9 +36,9 @@ import sys
 ## set directories and parameters
 ########################################
 BASE_DIR = 'input/'
-EMBEDDING_FILE = BASE_DIR + 'GoogleNews-vectors-negative300.bin'
-TRAIN_DATA_FILE = BASE_DIR + 'train.csv'
-TEST_DATA_FILE = BASE_DIR + 'test.csv'
+EMBEDDING_FILE = os.path.join(BASE_DIR, 'GoogleNews-vectors-negative300.bin')
+TRAIN_DATA_FILE = os.path.join(BASE_DIR, 'train.csv')
+TEST_DATA_FILE = os.path.join(BASE_DIR, 'test.csv')
 MAX_SEQUENCE_LENGTH = 30
 MAX_NB_WORDS = 200000
 EMBEDDING_DIM = 300
