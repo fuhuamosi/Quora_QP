@@ -15,7 +15,7 @@ from preprocess.data_helpers import batch_iter, sample_eval_data, \
 from preprocess.file_utils import deserialize
 from nltk.corpus import stopwords
 
-tf.flags.DEFINE_float('learning_rate', 5e-4, 'Initial learning rate')
+tf.flags.DEFINE_float('learning_rate', 1e-4, 'Initial learning rate')
 tf.flags.DEFINE_float('decay_ratio', 0.95, 'Learning rate decay ratio')
 tf.flags.DEFINE_float('max_grad_norm', 40.0, 'Clip gradients to this norm.')
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")

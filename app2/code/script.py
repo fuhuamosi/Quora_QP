@@ -14,7 +14,7 @@ import csv
 import codecs
 import numpy as np
 
-np.random.seed(1)
+np.random.seed(368)
 import pandas as pd
 
 from nltk.corpus import stopwords
@@ -35,7 +35,7 @@ import sys
 ########################################
 ## set directories and parameters
 ########################################
-BASE_DIR = 'input/'
+BASE_DIR = os.path.join('..', 'input')
 EMBEDDING_FILE = os.path.join(BASE_DIR, 'GoogleNews-vectors-negative300.bin')
 TRAIN_DATA_FILE = os.path.join(BASE_DIR, 'train.csv')
 TEST_DATA_FILE = os.path.join(BASE_DIR, 'test.csv')
@@ -269,8 +269,8 @@ bst_val_score = min(hist.history['val_loss'])
 ########################################
 print('Start making the submission before fine-tuning')
 
-preds = model.predict([test_data_1, test_data_2], batch_size=8192, verbose=1)
-preds += model.predict([test_data_2, test_data_1], batch_size=8192, verbose=1)
+preds = model.predict([test_data_1, test_data_2], batch_size=1024, verbose=1)
+preds += model.predict([test_data_2, test_data_1], batch_size=1024, verbose=1)
 preds /= 2
 
 submission = pd.DataFrame({'test_id': test_ids, 'is_duplicate': preds.ravel()})
