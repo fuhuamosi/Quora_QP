@@ -276,4 +276,5 @@ preds += model.predict([test_data_2, test_data_1], batch_size=1024, verbose=1)
 preds /= 2
 
 submission = pd.DataFrame({'test_id': test_ids, 'is_duplicate': preds.ravel()})
-submission.to_csv('%.4f_' % bst_val_score + STAMP + '.csv', index=False)
+file_name = '%.4f_' % bst_val_score + STAMP + '.csv'
+submission.to_csv(os.path.join('..', '..', 'submit', file_name), index=False)
