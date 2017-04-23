@@ -42,7 +42,7 @@ EMBEDDING_FILE = os.path.join(BASE_DIR, 'GoogleNews-vectors-negative300.bin')
 TRAIN_DATA_FILE = os.path.join(BASE_DIR, 'train.csv')
 TEST_DATA_FILE = os.path.join(BASE_DIR, 'test.csv')
 MAX_SEQUENCE_LENGTH = 30
-MAX_NB_WORDS = 200000
+MAX_NB_WORDS = 20000
 EMBEDDING_DIM = 300
 VALIDATION_SPLIT = 0.1
 
@@ -54,7 +54,8 @@ rate_drop_dense = 0.15 + np.random.rand() * 0.25
 act = 'relu'
 re_weight = True  # whether to re-weight classes to fit the 17.5% share in test set
 
-STAMP = 'lstm_%d_%d_%.2f_%.2f' % (num_lstm, num_dense, rate_drop_lstm, rate_drop_dense)
+STAMP = 'lstm_{:d}_{:d}_{:.2f}_{:.2f}'.format(num_lstm, num_dense,
+                                              rate_drop_lstm, rate_drop_dense)
 
 ########################################
 ## index word vectors
@@ -73,7 +74,7 @@ print('Processing text dataset')
 
 # The function "text_to_wordlist" is from
 # https://www.kaggle.com/currie32/quora-question-pairs/the-importance-of-cleaning-text
-def text_to_wordlist(text, remove_stopwords=False, stem_words=False):
+def text_to_word_list(text, remove_stopwords=False, stem_words=False):
     # Clean the text, with the option to remove stopwords and to stem words.
 
     # Convert words to lower case and split them
@@ -82,12 +83,12 @@ def text_to_wordlist(text, remove_stopwords=False, stem_words=False):
     # Optionally, remove stop words
     if remove_stopwords:
         stops = set(stopwords.words("english"))
-        text = [w for w in text if not w in stops]
+        text = [w for w in text if w not in stops]
 
     text = " ".join(text)
 
     # Clean the text
-    text = re.sub(r"[^A-Za-z0-9^,!.\/'+-=]", " ", text)
+    text = re.sub(r"[^A-Za-z0-9^,!./'+-=]", " ", text)
     text = re.sub(r"what's", "what is ", text)
     text = re.sub(r"\'s", " ", text)
     text = re.sub(r"\'ve", " have ", text)
@@ -125,7 +126,7 @@ def text_to_wordlist(text, remove_stopwords=False, stem_words=False):
         text = " ".join(stemmed_words)
 
     # Return a list of words
-    return (text)
+    return text
 
 
 texts_1 = []
@@ -135,8 +136,8 @@ with codecs.open(TRAIN_DATA_FILE, encoding='utf-8') as f:
     reader = csv.reader(f, delimiter=',')
     header = next(reader)
     for values in reader:
-        texts_1.append(text_to_wordlist(values[3]))
-        texts_2.append(text_to_wordlist(values[4]))
+        texts_1.append(text_to_word_list(values[3]))
+        texts_2.append(text_to_word_list(values[4]))
         labels.append(int(values[5]))
 print('Found %s texts in train.csv' % len(texts_1))
 
@@ -145,10 +146,9 @@ test_texts_2 = []
 test_ids = []
 with codecs.open(TEST_DATA_FILE, encoding='utf-8') as f:
     reader = csv.reader(f, delimiter=',')
-    header = next(reader)
     for values in reader:
-        test_texts_1.append(text_to_wordlist(values[1]))
-        test_texts_2.append(text_to_wordlist(values[2]))
+        test_texts_1.append(text_to_word_list(values[1]))
+        test_texts_2.append(text_to_word_list(values[2]))
         test_ids.append(values[0])
 print('Found %s texts in test.csv' % len(test_texts_1))
 
@@ -246,7 +246,7 @@ else:
 ########################################
 ## train the model
 ########################################
-model = Model(inputs=[sequence_1_input, sequence_2_input], \
+model = Model(inputs=[sequence_1_input, sequence_2_input],
               outputs=preds)
 model.compile(loss='binary_crossentropy',
               optimizer='nadam',
@@ -276,4 +276,4 @@ preds += model.predict([test_data_2, test_data_1], batch_size=1024, verbose=1)
 preds /= 2
 
 submission = pd.DataFrame({'test_id': test_ids, 'is_duplicate': preds.ravel()})
-submission.to_csv('%.4f_' % (bst_val_score) + STAMP + '.csv', index=False)
+submission.to_csv('%.4f_' % bst_val_score + STAMP + '.csv', index=False)
