@@ -1,20 +1,13 @@
-'''
-Single model may achieve LB scores at around 0.29+ ~ 0.30+
-Average ensembles can easily get 0.28+ or less
-Don't need to be an expert of feature engineering
-All you need is a GPU!!!!!!!
-'''
+# !/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-########################################
-## import packages
-########################################
+
 import os
 import re
 import csv
 import codecs
 import numpy as np
 
-np.random.seed(368)
 import pandas as pd
 
 from nltk.corpus import stopwords
@@ -31,6 +24,15 @@ from keras.layers.normalization import BatchNormalization
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 import sys
+
+"""
+Single model may achieve LB scores at around 0.29+ ~ 0.30+
+Average ensembles can easily get 0.28+ or less
+Don't need to be an expert of feature engineering
+All you need is a GPU!!!!!!!
+"""
+
+np.random.seed(368)
 
 ########################################
 ## set directories and parameters
