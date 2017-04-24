@@ -146,6 +146,7 @@ test_texts_2 = []
 test_ids = []
 with codecs.open(TEST_DATA_FILE, encoding='utf-8') as f:
     reader = csv.reader(f, delimiter=',')
+    next(reader)
     for values in reader:
         test_texts_1.append(text_to_word_list(values[1]))
         test_texts_2.append(text_to_word_list(values[2]))
