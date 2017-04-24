@@ -32,7 +32,7 @@ Don't need to be an expert of feature engineering
 All you need is a GPU!!!!!!!
 """
 
-np.random.seed(368)
+np.random.seed(888)
 
 ########################################
 ## set directories and parameters
@@ -42,7 +42,7 @@ EMBEDDING_FILE = os.path.join(BASE_DIR, 'GoogleNews-vectors-negative300.bin')
 TRAIN_DATA_FILE = os.path.join(BASE_DIR, 'train.csv')
 TEST_DATA_FILE = os.path.join(BASE_DIR, 'test.csv')
 MAX_SEQUENCE_LENGTH = 30
-MAX_NB_WORDS = 20000
+MAX_NB_WORDS = 200000
 EMBEDDING_DIM = 300
 VALIDATION_SPLIT = 0.1
 
