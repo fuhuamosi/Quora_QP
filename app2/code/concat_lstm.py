@@ -17,7 +17,7 @@ from string import punctuation
 from gensim.models import KeyedVectors
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
-from keras.layers import Dense, Input, LSTM, Embedding, Dropout, Merge
+from keras.layers import Dense, Input, LSTM, Embedding, Dropout, merge
 from keras.layers.merge import concatenate, add, multiply
 from keras.models import Model
 from keras.layers.normalization import BatchNormalization
@@ -227,19 +227,10 @@ sequence_2_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_2 = embedding_layer(sequence_2_input)
 y1 = lstm_layer(embedded_sequences_2)
 
-
-def abs_diff(x):
-    s = x[0]
-    for j in range(1, len(x)):
-        s -= x[j]
-    s = backend.abs(s)
-    return s
-
-
-abs_distance = Merge(layers=[x1, y1], mode=abs_diff)
+add_distance = add([x1, y1])
 mul_distance = multiply([x1, y1])
 # merged = concatenate([x1, y1])
-merged = concatenate([abs_distance, mul_distance])
+merged = concatenate([x1, y1, add_distance, mul_distance])
 
 merged = Dropout(rate_drop_dense)(merged)
 merged = BatchNormalization()(merged)
