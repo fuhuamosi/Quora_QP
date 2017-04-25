@@ -22,6 +22,7 @@ from keras.layers.merge import concatenate
 from keras.models import Model
 from keras.layers.normalization import BatchNormalization
 from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras import backend
 
 import sys
 
@@ -226,7 +227,11 @@ sequence_2_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_2 = embedding_layer(sequence_2_input)
 y1 = lstm_layer(embedded_sequences_2)
 
-merged = concatenate([x1, y1])
+abs_distance = backend.abs(x1 - y1)
+mul_distance = x1 * y1
+# merged = concatenate([x1, y1])
+merged = concatenate([abs_distance, mul_distance])
+
 merged = Dropout(rate_drop_dense)(merged)
 merged = BatchNormalization()(merged)
 
