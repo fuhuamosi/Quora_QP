@@ -227,7 +227,16 @@ sequence_2_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_2 = embedding_layer(sequence_2_input)
 y1 = lstm_layer(embedded_sequences_2)
 
-abs_distance = Merge(layers=[x1, y1], mode=lambda x, y: backend.abs(x - y))
+
+def abs_diff(x):
+    s = x[0]
+    for j in range(1, len(x)):
+        s -= x[j]
+    s = backend.abs(s)
+    return s
+
+
+abs_distance = Merge(layers=[x1, y1], mode=abs_diff)
 mul_distance = multiply([x1, y1])
 # merged = concatenate([x1, y1])
 merged = concatenate([abs_distance, mul_distance])
