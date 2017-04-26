@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from gensim.models import KeyedVectors
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.layers import Dense, Input, LSTM, Embedding, Dropout
+from keras.layers import Dense, Input, LSTM, Embedding, Dropout, Conv2D, MaxPool2D
 from keras.layers.merge import concatenate, add, multiply
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
@@ -126,6 +126,8 @@ def text_to_word_list(text, remove_stopwords=False, stem_words=False):
     # Return a list of words
     return text
 
+cnt = 0
+max_cnt = 1000
 
 texts_1 = []
 texts_2 = []
@@ -137,11 +139,15 @@ with codecs.open(TRAIN_DATA_FILE, encoding='utf-8') as f:
         texts_1.append(text_to_word_list(values[3]))
         texts_2.append(text_to_word_list(values[4]))
         labels.append(int(values[5]))
+        if cnt > max_cnt:
+            break
+        cnt += 1
 print('Found %s texts in train.csv' % len(texts_1))
 
 test_texts_1 = []
 test_texts_2 = []
 test_ids = []
+cnt = 0
 with codecs.open(TEST_DATA_FILE, encoding='utf-8') as f:
     reader = csv.reader(f, delimiter=',')
     next(reader)
@@ -149,6 +155,9 @@ with codecs.open(TEST_DATA_FILE, encoding='utf-8') as f:
         test_texts_1.append(text_to_word_list(values[1]))
         test_texts_2.append(text_to_word_list(values[2]))
         test_ids.append(values[0])
+        if cnt > max_cnt:
+            break
+        cnt += 1
 print('Found %s texts in test.csv' % len(test_texts_1))
 
 tokenizer = Tokenizer(num_words=MAX_NB_WORDS)
@@ -214,20 +223,24 @@ embedding_layer = Embedding(nb_words,
                             weights=[embedding_matrix],
                             input_length=MAX_SEQUENCE_LENGTH,
                             trainable=False)
-lstm_layer = LSTM(num_lstm, dropout=rate_drop_lstm, recurrent_dropout=rate_drop_lstm)
+lstm_layer = LSTM(num_lstm, dropout=rate_drop_lstm, recurrent_dropout=rate_drop_lstm,
+                  return_sequences=True)
+lstm_layer2 = LSTM(150, dropout=rate_drop_lstm, recurrent_dropout=rate_drop_lstm)
 
 sequence_1_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_1 = embedding_layer(sequence_1_input)
 x1 = lstm_layer(embedded_sequences_1)
+x1 = lstm_layer2(x1)
 
 sequence_2_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_2 = embedding_layer(sequence_2_input)
 y1 = lstm_layer(embedded_sequences_2)
+y1 = lstm_layer2(y1)
 
 add_distance = add([x1, y1])
 mul_distance = multiply([x1, y1])
-# merged = concatenate([x1, y1])
-merged = concatenate([add_distance, mul_distance])
+merged = concatenate([x1, y1])
+# merged = concatenate([add_distance, mul_distance])
 
 merged = Dropout(rate_drop_dense)(merged)
 merged = BatchNormalization()(merged)
