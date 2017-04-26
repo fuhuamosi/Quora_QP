@@ -227,7 +227,7 @@ y1 = lstm_layer(embedded_sequences_2)
 add_distance = add([x1, y1])
 mul_distance = multiply([x1, y1])
 # merged = concatenate([x1, y1])
-merged = concatenate([x1, y1])
+merged = concatenate([add_distance, mul_distance])
 
 merged = Dropout(rate_drop_dense)(merged)
 merged = BatchNormalization()(merged)
