@@ -52,6 +52,9 @@ num_dense = np.random.randint(100, 150)
 rate_drop_lstm = 0.15 + np.random.rand() * 0.25
 rate_drop_dense = 0.15 + np.random.rand() * 0.25
 
+class0_weight = 1.309028344
+class1_weight = 0.472001959
+
 act = 'relu'
 re_weight = True  # whether to re-weight classes to fit the 17.5% share in test set
 
@@ -206,8 +209,8 @@ labels_val = np.concatenate((labels[idx_val], labels[idx_val]))
 
 weight_val = np.ones(len(labels_val))
 if re_weight:
-    weight_val *= 0.472001959
-    weight_val[labels_val == 0] = 1.309028344
+    weight_val *= class1_weight
+    weight_val[labels_val == 0] = class0_weight
 
 ########################################
 ## define the model structure
@@ -230,7 +233,7 @@ y1 = lstm_layer(embedded_sequences_2)
 add_distance = add([x1, y1])
 mul_distance = multiply([x1, y1])
 # merged = concatenate([x1, y1])
-merged = concatenate([x1, y1, add_distance, mul_distance])
+merged = concatenate([x1, y1])
 
 merged = Dropout(rate_drop_dense)(merged)
 merged = BatchNormalization()(merged)
@@ -245,7 +248,7 @@ preds = Dense(1, activation='sigmoid')(merged)
 ## add class weight
 ########################################
 if re_weight:
-    class_weight = {0: 1.309028344, 1: 0.472001959}
+    class_weight = {0: class0_weight, 1: class1_weight}
 else:
     class_weight = None
 
