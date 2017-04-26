@@ -2,29 +2,23 @@
 # -*- coding: utf-8 -*-
 
 
+import codecs
+import csv
 import os
 import re
-import csv
-import codecs
+
 import numpy as np
-
 import pandas as pd
-
+from gensim.models import KeyedVectors
+from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras.layers import Dense, Input, LSTM, Embedding, Dropout
+from keras.layers.merge import concatenate, add, multiply
+from keras.layers.normalization import BatchNormalization
+from keras.models import Model
+from keras.preprocessing.sequence import pad_sequences
+from keras.preprocessing.text import Tokenizer
 from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
-from string import punctuation
-
-from gensim.models import KeyedVectors
-from keras.preprocessing.text import Tokenizer
-from keras.preprocessing.sequence import pad_sequences
-from keras.layers import Dense, Input, LSTM, Embedding, Dropout, merge
-from keras.layers.merge import concatenate, add, multiply
-from keras.models import Model
-from keras.layers.normalization import BatchNormalization
-from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras import backend
-
-import sys
 
 """
 Single model may achieve LB scores at around 0.29+ ~ 0.30+
