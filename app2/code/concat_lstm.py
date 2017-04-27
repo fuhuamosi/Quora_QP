@@ -227,7 +227,8 @@ embedding_layer = Embedding(nb_words,
 lstm_layer = LSTM(num_lstm, dropout=rate_drop_lstm, recurrent_dropout=rate_drop_lstm)
 
 window_size = 2
-conv_layer = Conv2D(filters=num_lstm, kernel_size=(window_size, EMBEDDING_DIM),
+num_filters = 150
+conv_layer = Conv2D(filters=num_filters, kernel_size=(window_size, EMBEDDING_DIM),
                     strides=(1, 1), padding='valid',
                     activation='relu')
 pool_layer = MaxPool2D(pool_size=(MAX_SEQUENCE_LENGTH - window_size + 1, 1), strides=(1, 1),
@@ -239,7 +240,7 @@ embedded_sequences_1 = embedding_layer(sequence_1_input)
 embedded_sequences_1 = Reshape((MAX_SEQUENCE_LENGTH, EMBEDDING_DIM, 1))(embedded_sequences_1)
 x1 = conv_layer(embedded_sequences_1)
 x1 = pool_layer(x1)
-x1 = Reshape((num_lstm,))(x1)
+x1 = Reshape((num_filters,))(x1)
 
 sequence_2_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_2 = embedding_layer(sequence_2_input)
@@ -247,7 +248,7 @@ embedded_sequences_2 = embedding_layer(sequence_2_input)
 embedded_sequences_2 = Reshape((MAX_SEQUENCE_LENGTH, EMBEDDING_DIM, 1))(embedded_sequences_2)
 y1 = conv_layer(embedded_sequences_2)
 y1 = pool_layer(y1)
-y1 = Reshape((num_lstm,))(y1)
+y1 = Reshape((num_filters,))(y1)
 
 merged = concatenate([x1, y1])
 # add_distance = add([x1, y1])
@@ -302,6 +303,8 @@ print('Start making the submission before fine-tuning')
 preds = model.predict([test_data_1, test_data_2], batch_size=1024, verbose=1)
 preds += model.predict([test_data_2, test_data_1], batch_size=1024, verbose=1)
 preds /= 2
+
+preds[preds < 1e-4] = 1e-4
 
 submission = pd.DataFrame({'test_id': test_ids, 'is_duplicate': preds.ravel()})
 file_name = '%.4f_' % bst_val_score + STAMP + '.csv'
