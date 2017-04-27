@@ -223,24 +223,20 @@ embedding_layer = Embedding(nb_words,
                             weights=[embedding_matrix],
                             input_length=MAX_SEQUENCE_LENGTH,
                             trainable=False)
-lstm_layer = LSTM(num_lstm, dropout=rate_drop_lstm, recurrent_dropout=rate_drop_lstm,
-                  return_sequences=True)
-lstm_layer2 = LSTM(150, dropout=rate_drop_lstm, recurrent_dropout=rate_drop_lstm)
+lstm_layer = LSTM(num_lstm, dropout=rate_drop_lstm, recurrent_dropout=rate_drop_lstm)
 
 sequence_1_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_1 = embedding_layer(sequence_1_input)
 x1 = lstm_layer(embedded_sequences_1)
-x1 = lstm_layer2(x1)
 
 sequence_2_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_2 = embedding_layer(sequence_2_input)
 y1 = lstm_layer(embedded_sequences_2)
-y1 = lstm_layer2(y1)
 
 add_distance = add([x1, y1])
 mul_distance = multiply([x1, y1])
-merged = concatenate([x1, y1])
-# merged = concatenate([add_distance, mul_distance])
+# merged = concatenate([x1, y1])
+merged = concatenate([add_distance, mul_distance])
 
 merged = Dropout(rate_drop_dense)(merged)
 merged = BatchNormalization()(merged)
