@@ -128,7 +128,7 @@ def text_to_word_list(text, remove_stopwords=False, stem_words=False):
 
 
 cnt = 0
-max_cnt = 3000
+max_cnt = 10000000
 
 texts_1 = []
 texts_2 = []
@@ -303,8 +303,6 @@ print('Start making the submission before fine-tuning')
 preds = model.predict([test_data_1, test_data_2], batch_size=1024, verbose=1)
 preds += model.predict([test_data_2, test_data_1], batch_size=1024, verbose=1)
 preds /= 2
-
-preds[preds < 1e-4] = 1e-4
 
 submission = pd.DataFrame({'test_id': test_ids, 'is_duplicate': preds.ravel()})
 file_name = '%.4f_' % bst_val_score + STAMP + '.csv'
