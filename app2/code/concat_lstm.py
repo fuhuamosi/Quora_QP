@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from gensim.models import KeyedVectors
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.layers import Dense, Input, LSTM, Embedding, Dropout, Conv2D, MaxPool2D
+from keras.layers import Dense, Input, LSTM, Embedding, Dropout, Conv2D, MaxPool2D, Reshape
 from keras.layers.merge import concatenate, add, multiply
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
@@ -126,8 +126,9 @@ def text_to_word_list(text, remove_stopwords=False, stem_words=False):
     # Return a list of words
     return text
 
+
 cnt = 0
-max_cnt = 1000
+max_cnt = 3000
 
 texts_1 = []
 texts_2 = []
@@ -225,18 +226,33 @@ embedding_layer = Embedding(nb_words,
                             trainable=False)
 lstm_layer = LSTM(num_lstm, dropout=rate_drop_lstm, recurrent_dropout=rate_drop_lstm)
 
+window_size = 2
+conv_layer = Conv2D(filters=num_lstm, kernel_size=(window_size, EMBEDDING_DIM),
+                    strides=(1, 1), padding='valid',
+                    activation='relu')
+pool_layer = MaxPool2D(pool_size=(MAX_SEQUENCE_LENGTH - window_size + 1, 1), strides=(1, 1),
+                       padding='valid')
+
 sequence_1_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_1 = embedding_layer(sequence_1_input)
-x1 = lstm_layer(embedded_sequences_1)
+# x1 = lstm_layer(embedded_sequences_1)
+embedded_sequences_1 = Reshape((MAX_SEQUENCE_LENGTH, EMBEDDING_DIM, 1))(embedded_sequences_1)
+x1 = conv_layer(embedded_sequences_1)
+x1 = pool_layer(x1)
+x1 = Reshape((num_lstm,))(x1)
 
 sequence_2_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_2 = embedding_layer(sequence_2_input)
-y1 = lstm_layer(embedded_sequences_2)
+# y1 = lstm_layer(embedded_sequences_2)
+embedded_sequences_2 = Reshape((MAX_SEQUENCE_LENGTH, EMBEDDING_DIM, 1))(embedded_sequences_2)
+y1 = conv_layer(embedded_sequences_2)
+y1 = pool_layer(y1)
+y1 = Reshape((num_lstm,))(y1)
 
-add_distance = add([x1, y1])
-mul_distance = multiply([x1, y1])
-# merged = concatenate([x1, y1])
-merged = concatenate([add_distance, mul_distance])
+merged = concatenate([x1, y1])
+# add_distance = add([x1, y1])
+# mul_distance = multiply([x1, y1])
+# merged = concatenate([add_distance, mul_distance])
 
 merged = Dropout(rate_drop_dense)(merged)
 merged = BatchNormalization()(merged)
