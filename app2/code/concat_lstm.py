@@ -226,29 +226,43 @@ embedding_layer = Embedding(nb_words,
                             trainable=False)
 lstm_layer = LSTM(num_lstm, dropout=rate_drop_lstm, recurrent_dropout=rate_drop_lstm)
 
-window_size = 2
-num_filters = 150
-conv_layer = Conv2D(filters=num_filters, kernel_size=(window_size, EMBEDDING_DIM),
-                    strides=(1, 1), padding='valid',
-                    activation='relu')
-pool_layer = MaxPool2D(pool_size=(MAX_SEQUENCE_LENGTH - window_size + 1, 1), strides=(1, 1),
-                       padding='valid')
+window_size = [1, 2, 3, 4]
+num_filters = 50
+conv_layers = []
+pool_layers = []
+for w in window_size:
+    conv_layer = Conv2D(filters=num_filters, kernel_size=(w, EMBEDDING_DIM),
+                        strides=(1, 1), padding='valid',
+                        activation='relu')
+    pool_layer = MaxPool2D(pool_size=(MAX_SEQUENCE_LENGTH - w + 1, 1), strides=(1, 1),
+                           padding='valid')
+    conv_layers.append(conv_layer)
+    pool_layers.append(pool_layer)
 
 sequence_1_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_1 = embedding_layer(sequence_1_input)
 # x1 = lstm_layer(embedded_sequences_1)
 embedded_sequences_1 = Reshape((MAX_SEQUENCE_LENGTH, EMBEDDING_DIM, 1))(embedded_sequences_1)
-x1 = conv_layer(embedded_sequences_1)
-x1 = pool_layer(x1)
-x1 = Reshape((num_filters,))(x1)
+xs = []
+for i in range(len(conv_layers)):
+    x = conv_layers[i](embedded_sequences_1)
+    x = pool_layers[i](x)
+    x = Reshape((num_filters,))(x)
+    xs.append(x)
 
 sequence_2_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_2 = embedding_layer(sequence_2_input)
 # y1 = lstm_layer(embedded_sequences_2)
 embedded_sequences_2 = Reshape((MAX_SEQUENCE_LENGTH, EMBEDDING_DIM, 1))(embedded_sequences_2)
-y1 = conv_layer(embedded_sequences_2)
-y1 = pool_layer(y1)
-y1 = Reshape((num_filters,))(y1)
+ys = []
+for i in range(len(conv_layers)):
+    y = conv_layers[i](embedded_sequences_2)
+    y = pool_layers[i](y)
+    y = Reshape((num_filters,))(y)
+    ys.append(y)
+
+x1 = concatenate(xs)
+y1 = concatenate(ys)
 
 merged = concatenate([x1, y1])
 # add_distance = add([x1, y1])
