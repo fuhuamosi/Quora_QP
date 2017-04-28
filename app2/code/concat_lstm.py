@@ -172,14 +172,14 @@ test_sequences_2 = tokenizer.texts_to_sequences(test_texts_2)
 word_index = tokenizer.word_index
 print('Found %s unique tokens' % len(word_index))
 
-data_1 = pad_sequences(sequences_1, maxlen=MAX_SEQUENCE_LENGTH)
-data_2 = pad_sequences(sequences_2, maxlen=MAX_SEQUENCE_LENGTH)
+data_1 = pad_sequences(sequences_1, maxlen=MAX_SEQUENCE_LENGTH, truncating='post')
+data_2 = pad_sequences(sequences_2, maxlen=MAX_SEQUENCE_LENGTH, truncating='post')
 labels = np.array(labels)
 print('Shape of data tensor:', data_1.shape)
 print('Shape of label tensor:', labels.shape)
 
-test_data_1 = pad_sequences(test_sequences_1, maxlen=MAX_SEQUENCE_LENGTH)
-test_data_2 = pad_sequences(test_sequences_2, maxlen=MAX_SEQUENCE_LENGTH)
+test_data_1 = pad_sequences(test_sequences_1, maxlen=MAX_SEQUENCE_LENGTH, truncating='post')
+test_data_2 = pad_sequences(test_sequences_2, maxlen=MAX_SEQUENCE_LENGTH, truncating='post')
 test_ids = np.array(test_ids)
 
 ########################################
@@ -226,48 +226,48 @@ embedding_layer = Embedding(nb_words,
                             trainable=False)
 lstm_layer = LSTM(num_lstm, dropout=rate_drop_lstm, recurrent_dropout=rate_drop_lstm)
 
-window_size = [1, 2, 3, 4]
-num_filters = 50
-conv_layers = []
-pool_layers = []
-for w in window_size:
-    conv_layer = Conv2D(filters=num_filters, kernel_size=(w, EMBEDDING_DIM),
-                        strides=(1, 1), padding='valid',
-                        activation='relu')
-    pool_layer = MaxPool2D(pool_size=(MAX_SEQUENCE_LENGTH - w + 1, 1), strides=(1, 1),
-                           padding='valid')
-    conv_layers.append(conv_layer)
-    pool_layers.append(pool_layer)
+# window_size = [1, 2, 3, 4]
+# num_filters = 50
+# conv_layers = []
+# pool_layers = []
+# for w in window_size:
+#     conv_layer = Conv2D(filters=num_filters, kernel_size=(w, EMBEDDING_DIM),
+#                         strides=(1, 1), padding='valid',
+#                         activation='relu')
+#     pool_layer = MaxPool2D(pool_size=(MAX_SEQUENCE_LENGTH - w + 1, 1), strides=(1, 1),
+#                            padding='valid')
+#     conv_layers.append(conv_layer)
+#     pool_layers.append(pool_layer)
 
 sequence_1_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_1 = embedding_layer(sequence_1_input)
-# x1 = lstm_layer(embedded_sequences_1)
-embedded_sequences_1 = Reshape((MAX_SEQUENCE_LENGTH, EMBEDDING_DIM, 1))(embedded_sequences_1)
-xs = []
-for i in range(len(conv_layers)):
-    x = conv_layers[i](embedded_sequences_1)
-    x = pool_layers[i](x)
-    x = Reshape((num_filters,))(x)
-    xs.append(x)
+x1 = lstm_layer(embedded_sequences_1)
+# embedded_sequences_1 = Reshape((MAX_SEQUENCE_LENGTH, EMBEDDING_DIM, 1))(embedded_sequences_1)
+# xs = []
+# for i in range(len(conv_layers)):
+#     x = conv_layers[i](embedded_sequences_1)
+#     x = pool_layers[i](x)
+#     x = Reshape((num_filters,))(x)
+#     xs.append(x)
 
 sequence_2_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_2 = embedding_layer(sequence_2_input)
-# y1 = lstm_layer(embedded_sequences_2)
-embedded_sequences_2 = Reshape((MAX_SEQUENCE_LENGTH, EMBEDDING_DIM, 1))(embedded_sequences_2)
-ys = []
-for i in range(len(conv_layers)):
-    y = conv_layers[i](embedded_sequences_2)
-    y = pool_layers[i](y)
-    y = Reshape((num_filters,))(y)
-    ys.append(y)
+y1 = lstm_layer(embedded_sequences_2)
+# embedded_sequences_2 = Reshape((MAX_SEQUENCE_LENGTH, EMBEDDING_DIM, 1))(embedded_sequences_2)
+# ys = []
+# for i in range(len(conv_layers)):
+#     y = conv_layers[i](embedded_sequences_2)
+#     y = pool_layers[i](y)
+#     y = Reshape((num_filters,))(y)
+#     ys.append(y)
+#
+# x1 = concatenate(xs)
+# y1 = concatenate(ys)
 
-x1 = concatenate(xs)
-y1 = concatenate(ys)
-
-merged = concatenate([x1, y1])
-# add_distance = add([x1, y1])
-# mul_distance = multiply([x1, y1])
-# merged = concatenate([add_distance, mul_distance])
+# merged = concatenate([x1, y1])
+add_distance = add([x1, y1])
+mul_distance = multiply([x1, y1])
+merged = concatenate([add_distance, mul_distance])
 
 merged = Dropout(rate_drop_dense)(merged)
 merged = BatchNormalization()(merged)
