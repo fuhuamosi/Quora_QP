@@ -128,7 +128,7 @@ def text_to_word_list(text, remove_stopwords=False, stem_words=False):
 
 
 cnt = 0
-max_cnt = 10000000
+max_cnt = 1000
 
 texts_1 = []
 texts_2 = []
@@ -226,48 +226,50 @@ embedding_layer = Embedding(nb_words,
                             trainable=False)
 lstm_layer = LSTM(num_lstm, dropout=rate_drop_lstm, recurrent_dropout=rate_drop_lstm)
 
-# window_size = [1, 2, 3, 4]
-# num_filters = 50
-# conv_layers = []
-# pool_layers = []
-# for w in window_size:
-#     conv_layer = Conv2D(filters=num_filters, kernel_size=(w, EMBEDDING_DIM),
-#                         strides=(1, 1), padding='valid',
-#                         activation='relu')
-#     pool_layer = MaxPool2D(pool_size=(MAX_SEQUENCE_LENGTH - w + 1, 1), strides=(1, 1),
-#                            padding='valid')
-#     conv_layers.append(conv_layer)
-#     pool_layers.append(pool_layer)
+window_size = [1, 2, 3, 4]
+num_filters = 20
+conv_layers = []
+pool_layers = []
+for w in window_size:
+    conv_layer = Conv2D(filters=num_filters, kernel_size=(w, EMBEDDING_DIM),
+                        strides=(1, 1), padding='valid',
+                        activation='relu')
+    pool_layer = MaxPool2D(pool_size=(MAX_SEQUENCE_LENGTH - w + 1, 1), strides=(1, 1),
+                           padding='valid')
+    conv_layers.append(conv_layer)
+    pool_layers.append(pool_layer)
 
 sequence_1_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_1 = embedding_layer(sequence_1_input)
 x1 = lstm_layer(embedded_sequences_1)
-# embedded_sequences_1 = Reshape((MAX_SEQUENCE_LENGTH, EMBEDDING_DIM, 1))(embedded_sequences_1)
-# xs = []
-# for i in range(len(conv_layers)):
-#     x = conv_layers[i](embedded_sequences_1)
-#     x = pool_layers[i](x)
-#     x = Reshape((num_filters,))(x)
-#     xs.append(x)
+embedded_sequences_1 = Reshape((MAX_SEQUENCE_LENGTH, EMBEDDING_DIM, 1))(embedded_sequences_1)
+xs = []
+for i in range(len(conv_layers)):
+    x = conv_layers[i](embedded_sequences_1)
+    x = pool_layers[i](x)
+    x = Reshape((num_filters,))(x)
+    xs.append(x)
 
 sequence_2_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_2 = embedding_layer(sequence_2_input)
 y1 = lstm_layer(embedded_sequences_2)
-# embedded_sequences_2 = Reshape((MAX_SEQUENCE_LENGTH, EMBEDDING_DIM, 1))(embedded_sequences_2)
-# ys = []
-# for i in range(len(conv_layers)):
-#     y = conv_layers[i](embedded_sequences_2)
-#     y = pool_layers[i](y)
-#     y = Reshape((num_filters,))(y)
-#     ys.append(y)
-#
-# x1 = concatenate(xs)
-# y1 = concatenate(ys)
+embedded_sequences_2 = Reshape((MAX_SEQUENCE_LENGTH, EMBEDDING_DIM, 1))(embedded_sequences_2)
+ys = []
+for i in range(len(conv_layers)):
+    y = conv_layers[i](embedded_sequences_2)
+    y = pool_layers[i](y)
+    y = Reshape((num_filters,))(y)
+    ys.append(y)
+
+x2 = concatenate(xs)
+y2 = concatenate(ys)
 
 # merged = concatenate([x1, y1])
-add_distance = add([x1, y1])
-mul_distance = multiply([x1, y1])
-merged = concatenate([add_distance, mul_distance])
+add_distance1 = add([x1, y1])
+mul_distance1 = multiply([x1, y1])
+add_distance2 = add([x2, y2])
+mul_distance2 = multiply([x2, y2])
+merged = concatenate([add_distance1, mul_distance1, add_distance2, mul_distance2])
 
 merged = Dropout(rate_drop_dense)(merged)
 merged = BatchNormalization()(merged)
