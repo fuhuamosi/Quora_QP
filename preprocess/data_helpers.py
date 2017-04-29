@@ -174,7 +174,7 @@ def get_idf_ratio(a, b, idf_dict):
     common_weights = sum([idf_dict.get(x, 0) for x in common_ids])
     all_words = set(a) | set(b)
     all_weights = sum([idf_dict.get(x, 0) for x in all_words])
-    return common_weights / (all_weights + 1e-3)
+    return common_weights / (all_weights + 1e-4)
 
 
 def get_levenshtein_ratio(a, b):
@@ -194,37 +194,55 @@ def get_levenshtein_ratio(a, b):
     return min_dis[len1][len2] / ((len1 + len2) / 2)
 
 
-def get_move_ratio(a, b, word_embeddings, stops_id):
+def get_move_ratio(a, b, word_embeddings):
     def get_move(x, y):
         all_dis = 0
         for w1 in x:
-            embed_w1 = np.array(word_embeddings[w1])
-            min_dis = 500.0
+            embed_w1 = word_embeddings[w1]
+            min_dis = 1000.0
             for w2 in y:
-                embed_w2 = np.array(word_embeddings[w2])
+                embed_w2 = word_embeddings[w2]
                 min_dis = min(min_dis, np.linalg.norm(embed_w1 - embed_w2))
             all_dis += min_dis
-        return all_dis / (len(x) + 1e-6) / 10
+        return all_dis / (len(x) + 1e-4) / 10
 
-    a2 = list(filter(lambda x: x not in stops_id, a))
-    b2 = list(filter(lambda x: x not in stops_id, b))
-    dis1 = get_move(a2, b2)
-    dis2 = get_move(b2, a2)
+    dis1 = get_move(a, b)
+    dis2 = get_move(b, a)
     average_dis = (dis1 + dis2) / 2
     return average_dis
 
 
-def get_extra_features(sents1, sents2, idf_dict, word_embeddings, stops_id):
-    s1 = [list(filter(lambda x: x != PAD_ID and x != NULL_ID, s)) for s in sents1]
+def get_extra_features(sents1, sents2, idf_dict, word_embeddings):
+    s1 = [list(filter(lambda x: x != PAD_ID, s)) for s in sents1]
     s2 = [list(filter(lambda x: x != PAD_ID, s)) for s in sents2]
     lcs_ratios = [get_lcs_ratio(a, b) for a, b in zip(s1, s2)]
     idf_ratios = [get_idf_ratio(a, b, idf_dict) for a, b in zip(s1, s2)]
-    levenshtein_ratios = [get_levenshtein_ratio(a, b) for a, b in zip(s1, s2)]
-    move_ratios = [get_move_ratio(a, b, word_embeddings, stops_id) for a, b in zip(s1, s2)]
+    # levenshtein_ratios = [get_levenshtein_ratio(a, b) for a, b in zip(s1, s2)]
+    # move_ratios = [get_move_ratio(a, b, word_embeddings) for a, b in zip(s1, s2)]
 
-    extra_features = [[a, b, c, d] for a, b, c, d in
-                      zip(lcs_ratios, idf_ratios, levenshtein_ratios, move_ratios)]
-    return extra_features
+    extra_features = [[a, b] for a, b in
+                      zip(lcs_ratios, idf_ratios)]
+    return np.array(extra_features)
+
+
+def get_idf_dict(text_list, min_cnt=5):
+    idf_dict = {}
+    for x in text_list:
+        x_set = set()
+        for w in x:
+            if w == 0:
+                break
+            if w not in x_set:
+                idf_dict.setdefault(w, 0)
+                idf_dict[w] += 1
+                x_set.add(w)
+    for w in idf_dict:
+        cnt = idf_dict[w]
+        if cnt < 5:
+            idf_dict[w] = 0
+        else:
+            idf_dict[w] = math.log(len(text_list) / idf_dict[w])
+    return idf_dict
 
 
 def main():
