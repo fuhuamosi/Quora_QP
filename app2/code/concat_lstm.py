@@ -223,7 +223,7 @@ idf_dict = get_idf_dict(all_sequences)
 
 train_features = get_extra_features(data_1_train.tolist(), data_2_train.tolist(), idf_dict,
                                     embedding_matrix)
-val_features = get_extra_features(data_1_val.tolist(), data_2_train.tolist(), idf_dict,
+val_features = get_extra_features(data_1_val.tolist(), data_2_val.tolist(), idf_dict,
                                   embedding_matrix)
 test_features = get_extra_features(test_data_1.tolist(), test_data_2.tolist(), idf_dict,
                                    embedding_matrix)
