@@ -217,11 +217,11 @@ def get_extra_features(sents1, sents2, idf_dict, word_embeddings):
     s2 = [list(filter(lambda x: x != PAD_ID, s)) for s in sents2]
     lcs_ratios = [get_lcs_ratio(a, b) for a, b in zip(s1, s2)]
     idf_ratios = [get_idf_ratio(a, b, idf_dict) for a, b in zip(s1, s2)]
-    # levenshtein_ratios = [get_levenshtein_ratio(a, b) for a, b in zip(s1, s2)]
-    # move_ratios = [get_move_ratio(a, b, word_embeddings) for a, b in zip(s1, s2)]
+    levenshtein_ratios = [get_levenshtein_ratio(a, b) for a, b in zip(s1, s2)]
+    move_ratios = [get_move_ratio(a, b, word_embeddings) for a, b in zip(s1, s2)]
 
-    extra_features = [[a, b] for a, b in
-                      zip(lcs_ratios, idf_ratios)]
+    extra_features = [[a, b, c, d] for a, b, c, d in
+                      zip(lcs_ratios, idf_ratios, levenshtein_ratios, move_ratios)]
     return np.array(extra_features)
 
 

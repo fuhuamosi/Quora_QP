@@ -130,7 +130,7 @@ def text_to_word_list(text, remove_stopwords=False, stem_words=False):
 
 
 cnt = 0
-max_cnt = 10000000
+max_cnt = 1000
 
 texts_1 = []
 texts_2 = []
