@@ -277,6 +277,8 @@ y1 = lstm_layer(embedded_sequences_2)
 # x2 = concatenate(xs)
 # y2 = concatenate(ys)
 
+extra_features = Input(shape=(extra_feature_num,), dtype='float32')
+
 # merged = concatenate([x1, y1])
 add_distance1 = add([x1, y1])
 mul_distance1 = multiply([x1, y1])
@@ -285,14 +287,12 @@ merged = concatenate([add_distance1, mul_distance1])
 # mul_distance2 = multiply([x2, y2])
 # merged = concatenate([add_distance1, mul_distance1, add_distance2, mul_distance2])
 
-extra_features = Input(shape=(extra_feature_num,), dtype='float32')
-
 merged = Dropout(rate_drop_dense)(merged)
 merged = BatchNormalization()(merged)
+merged = concatenate([merged, extra_features])
 
 merged = Dense(num_dense, activation=act)(merged)
 merged = Dropout(rate_drop_dense)(merged)
-merged = concatenate([merged, extra_features])
 merged = BatchNormalization()(merged)
 
 preds = Dense(1, activation='sigmoid')(merged)
