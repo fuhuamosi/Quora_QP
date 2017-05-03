@@ -43,10 +43,10 @@ MAX_NB_WORDS = 200000
 EMBEDDING_DIM = 300
 VALIDATION_SPLIT = 0.1
 
-num_lstm = np.random.randint(175, 275)
-num_dense = np.random.randint(100, 150)
-rate_drop_lstm = 0.15 + np.random.rand() * 0.25
-rate_drop_dense = 0.15 + np.random.rand() * 0.25
+num_lstm = 250
+num_dense = 200
+rate_drop_lstm = 0.5
+rate_drop_dense = 0.5
 
 class0_weight = 1.309028344
 class1_weight = 0.472001959
@@ -130,7 +130,7 @@ def text_to_word_list(text, remove_stopwords=False, stem_words=False):
 
 
 cnt = 0
-max_cnt = 1000
+max_cnt = 10000000
 
 texts_1 = []
 texts_2 = []
