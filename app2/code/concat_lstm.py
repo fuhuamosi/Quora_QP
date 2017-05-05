@@ -20,7 +20,7 @@ from keras.preprocessing.text import Tokenizer
 from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
 
-from preprocess.data_helpers import get_idf_dict, get_extra_features
+from preprocess.data_helpers import get_idf_dict, get_extra_features, get_question_freq
 
 """
 Single model may achieve LB scores at around 0.29+ ~ 0.30+
@@ -50,6 +50,8 @@ rate_drop_dense = 0.5
 
 class0_weight = 1.309028344
 class1_weight = 0.472001959
+
+max_cnt = 10000000
 
 act = 'relu'
 re_weight = True  # whether to re-weight classes to fit the 17.5% share in test set
@@ -130,7 +132,6 @@ def text_to_word_list(text, remove_stopwords=False, stem_words=False):
 
 
 cnt = 0
-max_cnt = 10000000
 
 texts_1 = []
 texts_2 = []
@@ -220,13 +221,14 @@ if re_weight:
 
 all_sequences = sequences_1 + sequences_2 + test_sequences_1 + test_sequences_2
 idf_dict = get_idf_dict(all_sequences)
+question_freq = get_question_freq(sequences_1 + sequences_2)
 
 train_features = get_extra_features(data_1_train.tolist(), data_2_train.tolist(), idf_dict,
-                                    embedding_matrix)
+                                    embedding_matrix, question_freq)
 val_features = get_extra_features(data_1_val.tolist(), data_2_val.tolist(), idf_dict,
-                                  embedding_matrix)
+                                  embedding_matrix, question_freq)
 test_features = get_extra_features(test_data_1.tolist(), test_data_2.tolist(), idf_dict,
-                                   embedding_matrix)
+                                   embedding_matrix, question_freq)
 extra_feature_num = len(train_features[0])
 
 ########################################
