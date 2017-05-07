@@ -221,7 +221,7 @@ if re_weight:
 
 all_sequences = sequences_1 + sequences_2 + test_sequences_1 + test_sequences_2
 idf_dict = get_idf_dict(all_sequences)
-question_freq = get_question_freq(sequences_1 + sequences_2)
+question_freq = get_question_freq(all_sequences)
 
 train_features = get_extra_features(data_1_train.tolist(), data_2_train.tolist(), idf_dict,
                                     embedding_matrix, question_freq)
