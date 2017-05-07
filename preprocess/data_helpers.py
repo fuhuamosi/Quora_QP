@@ -218,7 +218,7 @@ def get_jaccard_ratio(a, b):
     return len(common_ids) / (len(all_words) + 1e-4)
 
 
-def get_two_gram_ratio(a, b):
+def get_two_gram_ratio(a, b, idf_dict):
     gram1 = []
     for i in range(len(a) - 1):
         gram1.append(str(a[i]) + ' ' + str(a[i + 1]))
@@ -228,8 +228,10 @@ def get_two_gram_ratio(a, b):
     gram1 = set(gram1)
     gram2 = set(gram2)
     commons = gram1 & gram2
+    common_weight = sum([sum([idf_dict.get(int(z), 0) for z in x.split(' ')]) for x in commons])
     alls = gram1 | gram2
-    return len(commons) / (len(alls) + 1e-4)
+    all_weight = sum([sum([idf_dict.get(int(z), 0) for z in x.split(' ')]) for x in alls])
+    return common_weight / (all_weight + 1e-4)
 
 
 def get_freq_ratio(a, b, question_freq: dict, max_freq=161):
@@ -245,16 +247,16 @@ def get_freq_ratio(a, b, question_freq: dict, max_freq=161):
 def get_extra_features(sents1, sents2, idf_dict, word_embeddings, question_freq):
     s1 = [list(filter(lambda x: x != PAD_ID, s)) for s in sents1]
     s2 = [list(filter(lambda x: x != PAD_ID, s)) for s in sents2]
-    lcs_ratios = [get_lcs_ratio(a, b) for a, b in zip(s1, s2)]
     idf_ratios = [get_idf_ratio(a, b, idf_dict) for a, b in zip(s1, s2)]
     freq_ratios = [get_freq_ratio(a, b, question_freq) for a, b in zip(s1, s2)]
-    # two_gram_ratios = [get_two_gram_ratio(a, b) for a, b in zip(s1, s2)]
+    two_gram_ratios = [get_two_gram_ratio(a, b, idf_dict) for a, b in zip(s1, s2)]
+    # lcs_ratios = [get_lcs_ratio(a, b) for a, b in zip(s1, s2)]
     # jaccard_ratios = [get_jaccard_ratio(a, b) for a, b in zip(s1, s2)]
     # levenshtein_ratios = [get_levenshtein_ratio(a, b) for a, b in zip(s1, s2)]
     # move_ratios = [get_move_ratio(a, b, word_embeddings) for a, b in zip(s1, s2)]
 
     extra_features = [[a, b, c] for a, b, c in
-                      zip(lcs_ratios, idf_ratios, freq_ratios)]
+                      zip(idf_ratios, freq_ratios, two_gram_ratios)]
     return np.array(extra_features)
 
 
