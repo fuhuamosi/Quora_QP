@@ -94,6 +94,7 @@ class MatchLstm:
                                  name='w0')
             b0 = tf.Variable(tf.constant(0.1, shape=[150]), name="b0")
             merged = tf.nn.xw_plus_b(merged, w0, b0)
+            merged = tf.nn.relu(merged)
 
         with tf.name_scope('dropout2'):
             merged = tf.nn.dropout(merged, self.dropout_keep_prob)
