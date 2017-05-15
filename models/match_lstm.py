@@ -85,18 +85,31 @@ class MatchLstm:
 
         with tf.name_scope('dropout'):
             self.h_drop = tf.nn.dropout(self.h_m_tensor, self.dropout_keep_prob)
+            merged = tf.layers.batch_normalization(self.h_drop)
+
+        with tf.variable_scope('hidden_layer'):
+            w0 = tf.get_variable(shape=[self._embedding_size,
+                                        150],
+                                 initializer=contrib.layers.xavier_initializer(),
+                                 name='w0')
+            b0 = tf.Variable(tf.constant(0.1, shape=[150]), name="b0")
+            merged = tf.nn.xw_plus_b(merged, w0, b0)
+
+        with tf.name_scope('dropout2'):
+            merged = tf.nn.dropout(merged, self.dropout_keep_prob)
+            merged = tf.layers.batch_normalization(merged)
 
         # with tf.name_scope('extra'):
         #     self.combined_features = tf.concat([self.h_drop, self.extra_features],
         #                                        axis=1)
 
         with tf.variable_scope('fully_connect'):
-            w1 = tf.get_variable(shape=[self._embedding_size,
+            w1 = tf.get_variable(shape=[150,
                                         self._num_class],
                                  initializer=contrib.layers.xavier_initializer(),
                                  name='w1')
             b1 = tf.Variable(tf.constant(0.1, shape=[self._num_class]), name="b1")
-            self.logits = tf.matmul(self.h_drop, w1) + b1
+            self.logits = tf.matmul(merged, w1) + b1
 
         with tf.name_scope('loss'):
             cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.labels,

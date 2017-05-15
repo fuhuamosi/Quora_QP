@@ -53,7 +53,7 @@ def cal_dup_score(x):
 
 
 @exe_time
-def test_step(x_batch, sent1, sent2, dropout_keep_prob, logits, sess, extra_feature):
+def test_step(x_batch, sent1, sent2, dropout_keep_prob, logits, sess):
     """
     Evaluates model on a dev set
     """
@@ -115,12 +115,10 @@ def main(_):
             input2 = graph.get_operation_by_name('sent2').outputs[0]
             dropout_keep_prob = graph.get_operation_by_name('dropout_keep_prob').outputs[0]
             logits = graph.get_operation_by_name('fully_connect/add').outputs[0]
-            extra_features = graph.get_operation_by_name('extra_features').outputs[0]
 
             all_predictions = np.array([])
             for x, end_index in batch_data(test_ids):
-                batch_scores = test_step(x, input1, input2, dropout_keep_prob, logits, sess,
-                                         extra_features)
+                batch_scores = test_step(x, input1, input2, dropout_keep_prob, logits, sess)
                 all_predictions = np.concatenate([all_predictions, batch_scores])
                 print('Predicting {} lines...'.format(end_index))
 
