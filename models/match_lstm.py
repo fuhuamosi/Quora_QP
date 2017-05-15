@@ -37,8 +37,8 @@ class MatchLstm:
                                      name='labels')
         self.dropout_keep_prob = tf.placeholder(shape=[], dtype=tf.float32,
                                                 name='dropout_keep_prob')
-        self.extra_features = tf.placeholder(shape=[None, self._extra_cnt], dtype=tf.float32,
-                                             name='extra_features')
+        # self.extra_features = tf.placeholder(shape=[None, self._extra_cnt], dtype=tf.float32,
+        #                                      name='extra_features')
 
         self._batch_size = tf.shape(self.sent1)[0]
 
@@ -86,17 +86,17 @@ class MatchLstm:
         with tf.name_scope('dropout'):
             self.h_drop = tf.nn.dropout(self.h_m_tensor, self.dropout_keep_prob)
 
-        with tf.name_scope('extra'):
-            self.combined_features = tf.concat([self.h_drop, self.extra_features],
-                                               axis=1)
+        # with tf.name_scope('extra'):
+        #     self.combined_features = tf.concat([self.h_drop, self.extra_features],
+        #                                        axis=1)
 
         with tf.variable_scope('fully_connect'):
-            w1 = tf.get_variable(shape=[self._embedding_size + self._extra_cnt,
+            w1 = tf.get_variable(shape=[self._embedding_size,
                                         self._num_class],
                                  initializer=contrib.layers.xavier_initializer(),
                                  name='w1')
             b1 = tf.Variable(tf.constant(0.1, shape=[self._num_class]), name="b1")
-            self.logits = tf.matmul(self.combined_features, w1) + b1
+            self.logits = tf.matmul(self.h_drop, w1) + b1
 
         with tf.name_scope('loss'):
             cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.labels,

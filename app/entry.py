@@ -72,14 +72,12 @@ def train_step(x_batch, y_batch, train_summary_op,
     A single training step
     """
     sents1, sents2 = unpack_x_batch(x_batch)
-    extra_features = get_extra_features(sents1, sents2, idf_dict, word_embeddings, stops_id)
     sents1, sents2 = remove_rare_words(sents1, sents2, max_id)
     feed_dict = {
         model.sent1: sents1,
         model.sent2: sents2,
         model.labels: y_batch,
-        model.dropout_keep_prob: FLAGS.dropout_keep_prob,
-        model.extra_features: extra_features
+        model.dropout_keep_prob: FLAGS.dropout_keep_prob
     }
     _, step, summaries, loss, accuracy, recall = sess.run(
         [model.train_op, model.global_step, train_summary_op,
@@ -98,14 +96,12 @@ def dev_step(x_batch, y_batch, dev_summary_op,
     Evaluates model on a dev set
     """
     sents1, sents2 = unpack_x_batch(x_batch)
-    extra_features = get_extra_features(sents1, sents2, idf_dict, word_embeddings, stops_id)
     sents1, sents2 = remove_rare_words(sents1, sents2, max_id)
     feed_dict = {
         model.sent1: sents1,
         model.sent2: sents2,
         model.labels: y_batch,
-        model.dropout_keep_prob: 1.0,
-        model.extra_features: extra_features
+        model.dropout_keep_prob: 1.0
     }
     step, summaries, loss, accuracy, recall = sess.run(
         [model.global_step, dev_summary_op,
