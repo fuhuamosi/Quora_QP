@@ -284,12 +284,15 @@ extra_features = Input(shape=(extra_feature_num,), dtype='float32')
 # merged = concatenate([x1, y1])
 add_distance1 = add([x1, y1])
 mul_distance1 = multiply([x1, y1])
-merged = concatenate([add_distance1, mul_distance1])
+input0 = concatenate([add_distance1, mul_distance1])
+input1 = Dropout(rate_drop_dense)(input0)
+input1 = BatchNormalization()(input1)
+output1 = Dense(105, activation='relu')(input1)
 # add_distance2 = add([x2, y2])
 # mul_distance2 = multiply([x2, y2])
 # merged = concatenate([add_distance1, mul_distance1, add_distance2, mul_distance2])
 
-merged = Dropout(rate_drop_dense)(merged)
+merged = Dropout(rate_drop_dense)(input0)
 merged = BatchNormalization()(merged)
 merged = concatenate([merged, extra_features])
 
@@ -297,6 +300,9 @@ merged = Dense(num_dense, activation=act)(merged)
 merged = Dropout(rate_drop_dense)(merged)
 merged = BatchNormalization()(merged)
 
+output2 = Dense(105, activation='relu')(merged)
+merged = add([output1, output2])
+merged = BatchNormalization()(merged)
 preds = Dense(1, activation='sigmoid')(merged)
 
 ########################################
