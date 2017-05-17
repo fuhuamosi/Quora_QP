@@ -234,7 +234,7 @@ def get_two_gram_ratio(a, b, idf_dict):
     return common_weight / (all_weight + 1e-4)
 
 
-def get_freq_ratio(a, b, question_freq: dict, max_freq=161):
+def get_freq_ratio(a, b, question_freq: dict, max_freq=324):
     a = [str(x) for x in a]
     a = ' '.join(a)
     b = [str(x) for x in b]

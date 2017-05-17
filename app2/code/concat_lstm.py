@@ -36,7 +36,7 @@ np.random.seed(888)
 ########################################
 BASE_DIR = os.path.join('..', 'input')
 EMBEDDING_FILE = os.path.join(BASE_DIR, 'GoogleNews-vectors-negative300.bin')
-TRAIN_DATA_FILE = os.path.join(BASE_DIR, 'train.csv')
+TRAIN_DATA_FILE = os.path.join(BASE_DIR, 'train_new.csv')
 TEST_DATA_FILE = os.path.join(BASE_DIR, 'test.csv')
 MAX_SEQUENCE_LENGTH = 30
 MAX_NB_WORDS = 200000
@@ -48,8 +48,8 @@ num_dense = 200
 rate_drop_lstm = 0.5
 rate_drop_dense = 0.5
 
-class0_weight = 1.309028344
-class1_weight = 0.472001959
+class0_weight = 1.756
+class1_weight = 0.329
 
 max_cnt = 10000000
 
@@ -215,9 +215,9 @@ data_2_val = np.vstack((data_2[idx_val], data_1[idx_val]))
 labels_val = np.concatenate((labels[idx_val], labels[idx_val]))
 
 weight_val = np.ones(len(labels_val))
-if re_weight:
-    weight_val *= class1_weight
-    weight_val[labels_val == 0] = class0_weight
+# if re_weight:
+#   weight_val *= class1_weight
+#  weight_val[labels_val == 0] = class0_weight
 
 all_sequences = sequences_1 + sequences_2 + test_sequences_1 + test_sequences_2
 idf_dict = get_idf_dict(all_sequences)
