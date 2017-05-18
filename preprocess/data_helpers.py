@@ -255,7 +255,7 @@ def get_extra_features(sents1, sents2, idf_dict, word_embeddings, question_freq)
     # levenshtein_ratios = [get_levenshtein_ratio(a, b) for a, b in zip(s1, s2)]
     # move_ratios = [get_move_ratio(a, b, word_embeddings) for a, b in zip(s1, s2)]
 
-    extra_features = [[a, b, c] for a, b, c in
+    extra_features = [[a, b, c] for a, b, c  in
                       zip(idf_ratios, freq_ratios, two_gram_ratios)]
     return np.array(extra_features)
 

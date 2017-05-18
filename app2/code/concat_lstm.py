@@ -45,6 +45,7 @@ VALIDATION_SPLIT = 0.1
 
 num_lstm = 250
 num_dense = 200
+hidden_size = 150
 rate_drop_lstm = 0.5
 rate_drop_dense = 0.5
 
@@ -215,9 +216,9 @@ data_2_val = np.vstack((data_2[idx_val], data_1[idx_val]))
 labels_val = np.concatenate((labels[idx_val], labels[idx_val]))
 
 weight_val = np.ones(len(labels_val))
-# if re_weight:
-#   weight_val *= class1_weight
-#  weight_val[labels_val == 0] = class0_weight
+if re_weight:
+    weight_val *= class1_weight
+    weight_val[labels_val == 0] = class0_weight
 
 all_sequences = sequences_1 + sequences_2 + test_sequences_1 + test_sequences_2
 idf_dict = get_idf_dict(all_sequences)
@@ -287,7 +288,7 @@ mul_distance1 = multiply([x1, y1])
 input0 = concatenate([add_distance1, mul_distance1])
 input1 = Dropout(rate_drop_dense)(input0)
 input1 = BatchNormalization()(input1)
-output1 = Dense(105, activation='relu')(input1)
+output1 = Dense(hidden_size, activation='relu')(input1)
 # add_distance2 = add([x2, y2])
 # mul_distance2 = multiply([x2, y2])
 # merged = concatenate([add_distance1, mul_distance1, add_distance2, mul_distance2])
@@ -300,7 +301,7 @@ merged = Dense(num_dense, activation=act)(merged)
 merged = Dropout(rate_drop_dense)(merged)
 merged = BatchNormalization()(merged)
 
-output2 = Dense(105, activation='relu')(merged)
+output2 = Dense(hidden_size, activation='relu')(merged)
 merged = add([output1, output2])
 merged = BatchNormalization()(merged)
 preds = Dense(1, activation='sigmoid')(merged)
@@ -335,6 +336,8 @@ hist = model.fit([data_1_train, data_2_train, train_features], labels_train,
 
 model.load_weights(bst_model_path)
 bst_val_score = min(hist.history['val_loss'])
+
+print('best val score: {}'.format(bst_val_score))
 
 ########################################
 ## make the submission
