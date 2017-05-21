@@ -22,7 +22,7 @@ from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
 
 from preprocess.data_helpers import get_idf_dict, get_extra_features, \
-    get_question_freq, get_iter_dict
+    get_question_freq, get_inter_dict
 
 """
 Single model may achieve LB scores at around 0.29+ ~ 0.30+
@@ -225,7 +225,7 @@ if re_weight:
 all_sequences = sequences_1 + sequences_2 + test_sequences_1 + test_sequences_2
 idf_dict = get_idf_dict(all_sequences)
 question_freq = get_question_freq(all_sequences)
-inter_dict = get_iter_dict(sequences_1 + test_sequences_1, sequences_2 + test_sequences_2)
+inter_dict = get_inter_dict(sequences_1 + test_sequences_1, sequences_2 + test_sequences_2)
 
 train_features = get_extra_features(data_1_train.tolist(), data_2_train.tolist(), idf_dict,
                                     embedding_matrix, question_freq, inter_dict)

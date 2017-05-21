@@ -244,19 +244,28 @@ def get_freq_ratio(a, b, question_freq: dict, max_freq=324):
     return max(a_freq, b_freq) / max_freq
 
 
-def get_extra_features(sents1, sents2, idf_dict, word_embeddings, question_freq):
+def get_inter_ratio(a, b, inter_dict, max_cnt=30):
+    q1 = ' '.join([str(x) for x in a])
+    q2 = ' '.join([str(x) for x in b])
+    inter_cnt = len(inter_dict.get(q1, set()) & inter_dict.get(q2, set()))
+    return inter_cnt / max_cnt
+
+
+def get_extra_features(sents1, sents2, idf_dict, word_embeddings, question_freq, inter_dict):
     s1 = [list(filter(lambda x: x != PAD_ID, s)) for s in sents1]
     s2 = [list(filter(lambda x: x != PAD_ID, s)) for s in sents2]
     idf_ratios = [get_idf_ratio(a, b, idf_dict) for a, b in zip(s1, s2)]
     freq_ratios = [get_freq_ratio(a, b, question_freq) for a, b in zip(s1, s2)]
     two_gram_ratios = [get_two_gram_ratio(a, b, idf_dict) for a, b in zip(s1, s2)]
+    inter_ratios = [get_inter_ratio(a, b, inter_dict) for a, b in zip(s1, s2)]
+
     # lcs_ratios = [get_lcs_ratio(a, b) for a, b in zip(s1, s2)]
     # jaccard_ratios = [get_jaccard_ratio(a, b) for a, b in zip(s1, s2)]
     # levenshtein_ratios = [get_levenshtein_ratio(a, b) for a, b in zip(s1, s2)]
     # move_ratios = [get_move_ratio(a, b, word_embeddings) for a, b in zip(s1, s2)]
 
-    extra_features = [[a, b, c] for a, b, c  in
-                      zip(idf_ratios, freq_ratios, two_gram_ratios)]
+    extra_features = [[a, b, c, d] for a, b, c, d in
+                      zip(idf_ratios, freq_ratios, two_gram_ratios, inter_ratios)]
     return np.array(extra_features)
 
 
@@ -289,6 +298,19 @@ def get_question_freq(text_list):
         freq_dict[q_str] += 1
     # freq_list = sorted(freq_dict.items(), key=lambda x: x[1], reverse=True)
     return freq_dict
+
+
+def get_inter_dict(seqs1, seqs2):
+    inter_dict = {}
+    assert len(seqs1) == len(seqs2)
+    for i in range(len(seqs1)):
+        q1 = ' '.join([str(x) for x in seqs1[i]])
+        q2 = ' '.join([str(x) for x in seqs2[i]])
+        inter_dict.setdefault(q1, set())
+        inter_dict.setdefault(q2, set())
+        inter_dict[q1].add(q2)
+        inter_dict[q2].add(q1)
+    return inter_dict
 
 
 def main():
