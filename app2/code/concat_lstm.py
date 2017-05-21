@@ -38,7 +38,7 @@ np.random.seed(888)
 ########################################
 BASE_DIR = os.path.join('..', 'input')
 EMBEDDING_FILE = os.path.join(BASE_DIR, 'GoogleNews-vectors-negative300.bin')
-TRAIN_DATA_FILE = os.path.join(BASE_DIR, 'train.csv')
+TRAIN_DATA_FILE = os.path.join(BASE_DIR, 'train_new.csv')
 TEST_DATA_FILE = os.path.join(BASE_DIR, 'test.csv')
 MAX_SEQUENCE_LENGTH = 30
 MAX_NB_WORDS = 200000
@@ -47,11 +47,12 @@ VALIDATION_SPLIT = 0.1
 
 num_lstm = 250
 num_dense = 200
+hidden_size = 150
 rate_drop_lstm = 0.5
 rate_drop_dense = 0.5
 
-class0_weight = 1.309028344
-class1_weight = 0.472001959
+class0_weight = 1.756
+class1_weight = 0.329
 
 max_cnt = 10000000
 
@@ -290,7 +291,7 @@ mul_distance1 = multiply([x1, y1])
 input0 = concatenate([add_distance1, mul_distance1])
 input1 = Dropout(rate_drop_dense)(input0)
 input1 = BatchNormalization()(input1)
-output1 = Dense(105, activation='relu')(input1)
+output1 = Dense(hidden_size, activation='relu')(input1)
 # add_distance2 = add([x2, y2])
 # mul_distance2 = multiply([x2, y2])
 # merged = concatenate([add_distance1, mul_distance1, add_distance2, mul_distance2])
@@ -303,7 +304,7 @@ merged = Dense(num_dense, activation=act)(merged)
 merged = Dropout(rate_drop_dense)(merged)
 merged = BatchNormalization()(merged)
 
-output2 = Dense(105, activation='relu')(merged)
+output2 = Dense(hidden_size, activation='relu')(merged)
 merged = add([output1, output2])
 merged = BatchNormalization()(merged)
 preds = Dense(1, activation='sigmoid')(merged)
@@ -338,6 +339,8 @@ hist = model.fit([data_1_train, data_2_train, train_features], labels_train,
 
 model.load_weights(bst_model_path)
 bst_val_score = min(hist.history['val_loss'])
+
+print('best val score: {}'.format(bst_val_score))
 
 ########################################
 ## make the submission
