@@ -11,7 +11,8 @@ import numpy as np
 import pandas as pd
 from gensim.models import KeyedVectors
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.layers import Dense, Input, LSTM, Embedding, Dropout, Conv2D, MaxPool2D, Reshape
+from keras.layers import Dense, Input, LSTM, Embedding, Dropout, \
+    Conv2D, MaxPool2D, Reshape
 from keras.layers.merge import concatenate, add, multiply
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
@@ -20,7 +21,8 @@ from keras.preprocessing.text import Tokenizer
 from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
 
-from preprocess.data_helpers import get_idf_dict, get_extra_features, get_question_freq
+from preprocess.data_helpers import get_idf_dict, get_extra_features, \
+    get_question_freq, get_iter_dict
 
 """
 Single model may achieve LB scores at around 0.29+ ~ 0.30+
@@ -222,13 +224,14 @@ if re_weight:
 all_sequences = sequences_1 + sequences_2 + test_sequences_1 + test_sequences_2
 idf_dict = get_idf_dict(all_sequences)
 question_freq = get_question_freq(all_sequences)
+inter_dict = get_iter_dict(sequences_1 + test_sequences_1, sequences_2 + test_sequences_2)
 
 train_features = get_extra_features(data_1_train.tolist(), data_2_train.tolist(), idf_dict,
-                                    embedding_matrix, question_freq)
+                                    embedding_matrix, question_freq, inter_dict)
 val_features = get_extra_features(data_1_val.tolist(), data_2_val.tolist(), idf_dict,
-                                  embedding_matrix, question_freq)
+                                  embedding_matrix, question_freq, inter_dict)
 test_features = get_extra_features(test_data_1.tolist(), test_data_2.tolist(), idf_dict,
-                                   embedding_matrix, question_freq)
+                                   embedding_matrix, question_freq, inter_dict)
 extra_feature_num = len(train_features[0])
 
 ########################################
