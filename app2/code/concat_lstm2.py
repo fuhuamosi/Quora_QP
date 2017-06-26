@@ -151,29 +151,11 @@ with codecs.open(TRAIN_DATA_FILE, encoding='utf-8') as f:
         cnt += 1
 print('Found %s texts in train.csv' % len(texts_1))
 
-test_texts_1 = []
-test_texts_2 = []
-test_ids = []
-cnt = 0
-with codecs.open(TEST_DATA_FILE, encoding='utf-8') as f:
-    reader = csv.reader(f, delimiter=',')
-    next(reader)
-    for values in reader:
-        test_texts_1.append(text_to_word_list(values[1]))
-        test_texts_2.append(text_to_word_list(values[2]))
-        test_ids.append(values[0])
-        if cnt > max_cnt:
-            break
-        cnt += 1
-print('Found %s texts in test.csv' % len(test_texts_1))
-
 tokenizer = Tokenizer(num_words=MAX_NB_WORDS)
-tokenizer.fit_on_texts(texts_1 + texts_2 + test_texts_1 + test_texts_2)
+tokenizer.fit_on_texts(texts_1 + texts_2)
 
 sequences_1 = tokenizer.texts_to_sequences(texts_1)
 sequences_2 = tokenizer.texts_to_sequences(texts_2)
-test_sequences_1 = tokenizer.texts_to_sequences(test_texts_1)
-test_sequences_2 = tokenizer.texts_to_sequences(test_texts_2)
 
 word_index = tokenizer.word_index
 print('Found %s unique tokens' % len(word_index))
@@ -183,10 +165,6 @@ data_2 = pad_sequences(sequences_2, maxlen=MAX_SEQUENCE_LENGTH, truncating='post
 labels = np.array(labels)
 print('Shape of data tensor:', data_1.shape)
 print('Shape of label tensor:', labels.shape)
-
-test_data_1 = pad_sequences(test_sequences_1, maxlen=MAX_SEQUENCE_LENGTH, truncating='post')
-test_data_2 = pad_sequences(test_sequences_2, maxlen=MAX_SEQUENCE_LENGTH, truncating='post')
-test_ids = np.array(test_ids)
 
 ########################################
 ## prepare embeddings
