@@ -48,16 +48,16 @@ VALIDATION_SPLIT = 0.1
 
 num_lstm = 250
 num_dense = 200
-rate_drop_lstm = 0.35
-rate_drop_dense = 0.35
+rate_drop_lstm = 0.25
+rate_drop_dense = 0.25
 
-class0_weight = 1.756
-class1_weight = 0.329
+class0_weight = 1.382
+class1_weight = 0.680
 
 max_cnt = 10000000
 
 act = 'relu'
-re_weight = False  # whether to re-weight classes to fit the 17.5% share in test set
+re_weight = True  # whether to re-weight classes to fit the 17.5% share in test set
 
 STAMP = 'lstm_{:d}_{:d}_{:.2f}_{:.2f}'.format(num_lstm, num_dense,
                                               rate_drop_lstm, rate_drop_dense)
