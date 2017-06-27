@@ -12,7 +12,7 @@ import pandas as pd
 from gensim.models import KeyedVectors
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers import Dense, Input, LSTM, Embedding, Dropout, \
-    Conv2D, MaxPool2D, Reshape
+    Conv2D, MaxPool2D, Reshape, Bidirectional
 from keras.layers.merge import concatenate, add, multiply
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
@@ -240,7 +240,8 @@ embedding_layer = Embedding(nb_words,
                             weights=[embedding_matrix],
                             input_length=MAX_SEQUENCE_LENGTH,
                             trainable=False)
-lstm_layer = LSTM(num_lstm, dropout=rate_drop_lstm, recurrent_dropout=rate_drop_lstm)
+lstm_layer = Bidirectional(LSTM(num_lstm, dropout=rate_drop_lstm,
+                                recurrent_dropout=rate_drop_lstm))
 
 sequence_1_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_1 = embedding_layer(sequence_1_input)
