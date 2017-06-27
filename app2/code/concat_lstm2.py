@@ -47,9 +47,8 @@ VALIDATION_SPLIT = 0.1
 
 num_lstm = 250
 num_dense = 200
-hidden_size = 150
-rate_drop_lstm = 0.5
-rate_drop_dense = 0.5
+rate_drop_lstm = 0.35
+rate_drop_dense = 0.35
 
 class0_weight = 1.756
 class1_weight = 0.329
@@ -231,7 +230,9 @@ sequence_2_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_2 = embedding_layer(sequence_2_input)
 y1 = lstm_layer(embedded_sequences_2)
 
-merged = concatenate([x1, y1])
+add_distance1 = add([x1, y1])
+mul_distance1 = multiply([x1, y1])
+merged = concatenate([add_distance1, mul_distance1])
 merged = Dropout(rate_drop_dense)(merged)
 merged = BatchNormalization()(merged)
 

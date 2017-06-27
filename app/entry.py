@@ -72,7 +72,7 @@ def train_step(x_batch, y_batch, train_summary_op,
     A single training step
     """
     sents1, sents2 = unpack_x_batch(x_batch)
-    sents1, sents2 = remove_rare_words(sents1, sents2, max_id)
+    # sents1, sents2 = remove_rare_words(sents1, sents2, max_id)
     feed_dict = {
         model.sent1: sents1,
         model.sent2: sents2,
@@ -96,7 +96,7 @@ def dev_step(x_batch, y_batch, dev_summary_op,
     Evaluates model on a dev set
     """
     sents1, sents2 = unpack_x_batch(x_batch)
-    sents1, sents2 = remove_rare_words(sents1, sents2, max_id)
+    # sents1, sents2 = remove_rare_words(sents1, sents2, max_id)
     feed_dict = {
         model.sent1: sents1,
         model.sent2: sents2,
