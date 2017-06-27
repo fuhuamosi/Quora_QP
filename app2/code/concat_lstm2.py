@@ -40,6 +40,7 @@ BASE_DIR = os.path.join('..', 'input')
 EMBEDDING_FILE = os.path.join(BASE_DIR, 'GoogleNews-vectors-negative300.bin')
 TRAIN_DATA_FILE = os.path.join(BASE_DIR, 'train.csv')
 TEST_DATA_FILE = os.path.join(BASE_DIR, 'test.csv')
+GENERATE_DATA_FILE = os.path.join(BASE_DIR, 'generate_data.csv')
 MAX_SEQUENCE_LENGTH = 30
 MAX_NB_WORDS = 200000
 EMBEDDING_DIM = 300
@@ -134,7 +135,6 @@ def text_to_word_list(text, remove_stopwords=False, stem_words=False):
 
 
 cnt = 0
-
 texts_1 = []
 texts_2 = []
 labels = []
@@ -150,17 +150,37 @@ with codecs.open(TRAIN_DATA_FILE, encoding='utf-8') as f:
         cnt += 1
 print('Found %s texts in train.csv' % len(texts_1))
 
+cnt = 0
+texts_3 = []
+texts_4 = []
+labels2 = []
+with codecs.open(GENERATE_DATA_FILE, encoding='utf-8') as f:
+    reader = csv.reader(f, delimiter=',')
+    next(reader)
+    for values in reader:
+        texts_3.append(text_to_word_list(values[3]))
+        texts_4.append(text_to_word_list(values[4]))
+        labels2.append(int(values[5]))
+        if cnt > max_cnt:
+            break
+        cnt += 1
+print('Found %s texts in generate_data.csv' % len(texts_3))
+
 tokenizer = Tokenizer(num_words=MAX_NB_WORDS)
 tokenizer.fit_on_texts(texts_1 + texts_2)
 
 sequences_1 = tokenizer.texts_to_sequences(texts_1)
 sequences_2 = tokenizer.texts_to_sequences(texts_2)
+sequences_3 = tokenizer.texts_to_sequences(texts_3)
+sequences_4 = tokenizer.texts_to_sequences(texts_4)
 
 word_index = tokenizer.word_index
 print('Found %s unique tokens' % len(word_index))
 
 data_1 = pad_sequences(sequences_1, maxlen=MAX_SEQUENCE_LENGTH, truncating='post')
 data_2 = pad_sequences(sequences_2, maxlen=MAX_SEQUENCE_LENGTH, truncating='post')
+data_3 = pad_sequences(sequences_3, maxlen=MAX_SEQUENCE_LENGTH, truncating='post')
+data_4 = pad_sequences(sequences_4, maxlen=MAX_SEQUENCE_LENGTH, truncating='post')
 labels = np.array(labels)
 print('Shape of data tensor:', data_1.shape)
 print('Shape of label tensor:', labels.shape)
@@ -186,9 +206,9 @@ perm = np.random.permutation(len(data_1))
 idx_train = perm[:int(len(data_1) * (1 - VALIDATION_SPLIT))]
 idx_val = perm[int(len(data_1) * (1 - VALIDATION_SPLIT)):]
 
-data_1_train = np.vstack((data_1[idx_train], data_2[idx_train]))
-data_2_train = np.vstack((data_2[idx_train], data_1[idx_train]))
-labels_train = np.concatenate((labels[idx_train], labels[idx_train]))
+data_1_train = np.vstack((data_1[idx_train], data_2[idx_train], data_3, data_4))
+data_2_train = np.vstack((data_2[idx_train], data_1[idx_train], data_4, data_3))
+labels_train = np.concatenate((labels[idx_train], labels[idx_train], labels2, labels2))
 
 data_1_val = np.vstack((data_1[idx_val], data_2[idx_val]))
 data_2_val = np.vstack((data_2[idx_val], data_1[idx_val]))
