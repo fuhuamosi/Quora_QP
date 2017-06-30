@@ -46,7 +46,7 @@ MAX_NB_WORDS = 200000
 EMBEDDING_DIM = 300
 VALIDATION_SPLIT = 0.1
 
-num_lstm = 150
+num_lstm = 200
 num_dense = 250
 rate_drop_lstm = 0.25
 rate_drop_dense = 0.25
