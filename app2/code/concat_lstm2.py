@@ -12,8 +12,9 @@ import pandas as pd
 from gensim.models import KeyedVectors
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers import Dense, Input, LSTM, Embedding, Dropout, \
-    Conv2D, MaxPool2D, Reshape, Bidirectional
+    Conv2D, MaxPool2D, Reshape, Bidirectional, merge
 from keras.layers.merge import concatenate, add, multiply
+from keras import backend as K
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
 from keras.preprocessing.sequence import pad_sequences
@@ -251,7 +252,8 @@ sequence_2_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_2 = embedding_layer(sequence_2_input)
 y1 = lstm_layer(embedded_sequences_2)
 
-add_distance1 = add([x1, y1])
+# add_distance1 = add([x1, y1])
+add_distance1 = merge([x1, y1], mode=lambda x, y: K.abs(x - y))
 mul_distance1 = multiply([x1, y1])
 merged = concatenate([add_distance1, mul_distance1])
 merged = Dropout(rate_drop_dense)(merged)
