@@ -253,7 +253,7 @@ embedded_sequences_2 = embedding_layer(sequence_2_input)
 y1 = lstm_layer(embedded_sequences_2)
 
 # add_distance1 = add([x1, y1])
-add_distance1 = merge([x1, y1], mode=lambda x, y: K.abs(x - y))
+add_distance1 = merge([x1, y1], mode=lambda x: K.abs(x[0] - x[1]), output_shape=lambda x: x[0])
 mul_distance1 = multiply([x1, y1])
 merged = concatenate([add_distance1, mul_distance1])
 merged = Dropout(rate_drop_dense)(merged)
