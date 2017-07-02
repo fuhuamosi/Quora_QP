@@ -46,7 +46,7 @@ MAX_NB_WORDS = 200000
 EMBEDDING_DIM = 300
 VALIDATION_SPLIT = 0.1
 
-num_lstm = 200
+num_lstm = 250
 num_dense = 250
 rate_drop_lstm = 0.25
 rate_drop_dense = 0.25
@@ -206,9 +206,9 @@ perm = np.random.permutation(len(data_1))
 idx_train = perm[:int(len(data_1) * (1 - VALIDATION_SPLIT))]
 idx_val = perm[int(len(data_1) * (1 - VALIDATION_SPLIT)):]
 
-data_1_train = np.vstack((data_1[idx_train], data_2[idx_train], data_3, data_4))
-data_2_train = np.vstack((data_2[idx_train], data_1[idx_train], data_4, data_3))
-labels_train = np.concatenate((labels[idx_train], labels[idx_train], labels2, labels2))
+data_1_train = np.vstack((data_1[idx_train], data_2[idx_train]))
+data_2_train = np.vstack((data_2[idx_train], data_1[idx_train]))
+labels_train = np.concatenate((labels[idx_train], labels[idx_train]))
 
 data_1_val = np.vstack((data_1[idx_val], data_2[idx_val]))
 data_2_val = np.vstack((data_2[idx_val], data_1[idx_val]))
@@ -288,7 +288,7 @@ model_checkpoint = ModelCheckpoint(bst_model_path, save_best_only=True, save_wei
 
 hist = model.fit([data_1_train, data_2_train], labels_train,
                  validation_data=([data_1_val, data_2_val], labels_val, weight_val),
-                 epochs=200, batch_size=2048, shuffle=True,
+                 epochs=200, batch_size=1024, shuffle=True,
                  class_weight=class_weight, callbacks=[early_stopping, model_checkpoint])
 
 model.load_weights(bst_model_path)
