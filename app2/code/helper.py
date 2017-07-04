@@ -3,9 +3,6 @@
 import numpy as np
 import pandas as pd
 
-f = None
-rank = None
-
 
 def generate_samples(train_file, idx_train):
     train_data = pd.read_csv(train_file)
@@ -16,8 +13,9 @@ def generate_samples(train_file, idx_train):
     for index, row in train_data.iterrows():
         qid_question_dict[row['qid1']] = row['question1']
         qid_question_dict[row['qid2']] = row['question2']
-        duplicates_set.add((row['qid1'], row['qid2']))
-        duplicates_set.add((row['qid2'], row['qid1']))
+        if row['is_duplicate'] == 1:
+            duplicates_set.add((row['qid1'], row['qid2']))
+            duplicates_set.add((row['qid2'], row['qid1']))
     duplicate_questions = train_data[train_data.is_duplicate == 1]
 
     f = dict.fromkeys(qid_question_dict)
@@ -28,10 +26,10 @@ def generate_samples(train_file, idx_train):
         rank[x] = 0
 
     for index, row in duplicate_questions.iterrows():
-        make(row['qid1'], row['qid2'])
+        make(row['qid1'], row['qid2'], f, rank)
 
     for x in f:
-        find(x)
+        find(x, f)
 
     duplicates = list(f.items())
     duplicates = sorted(duplicates, key=lambda aa: aa[1])
@@ -57,15 +55,15 @@ def generate_samples(train_file, idx_train):
     return text0, text1, labels
 
 
-def find(a):
+def find(a, f):
     if f[a] != a:
-        f[a] = find(f[a])
+        f[a] = find(f[a], f)
     return f[a]
 
 
-def make(a, b):
-    a = find(a)
-    b = find(b)
+def make(a, b, f, rank):
+    a = find(a, f)
+    b = find(b, f)
     if a == b: return
     if rank[a] > rank[b]:
         f[b] = a
