@@ -24,6 +24,7 @@ from nltk.stem import SnowballStemmer
 
 from preprocess.data_helpers import get_idf_dict, get_extra_features, \
     get_question_freq, get_inter_dict
+from app2.code.helper import filter_test_data
 
 """
 Single model may achieve LB scores at around 0.29+ ~ 0.30+
@@ -55,10 +56,11 @@ rate_drop_dense = 0.25
 class0_weight = 1.382
 class1_weight = 0.680
 
-max_cnt = 1000
+max_cnt = 100000
 
 act = 'relu'
-re_weight = True  # whether to re-weight classes to fit the 17.5% share in test set
+re_weight = False
+add_data = True
 
 STAMP = 'lstm_{:d}_{:d}_{:.2f}_{:.2f}'.format(num_lstm, num_dense,
                                               rate_drop_lstm, rate_drop_dense)
@@ -207,18 +209,26 @@ perm = np.random.permutation(len(data_1))
 idx_train = perm[:int(len(data_1) * (1 - VALIDATION_SPLIT))]
 idx_val = perm[int(len(data_1) * (1 - VALIDATION_SPLIT)):]
 
-data_1_train = np.vstack((data_1[idx_train], data_2[idx_train], data_3, data_4))
-data_2_train = np.vstack((data_2[idx_train], data_1[idx_train], data_4, data_3))
-labels_train = np.concatenate((labels[idx_train], labels[idx_train], labels2, labels2))
+data_3, data_4, labels2 = filter_test_data(data_3, data_4, labels2,
+                                           data_1[idx_val], data_2[idx_val])
+
+data_1_train = np.vstack((data_1[idx_train], data_2[idx_train]))
+data_2_train = np.vstack((data_2[idx_train], data_1[idx_train]))
+labels_train = np.concatenate((labels[idx_train], labels[idx_train]))
+if add_data:
+    data_1_train = np.concatenate((data_1_train, data_3, data_4))
+    data_2_train = np.concatenate((data_1_train, data_4, data_3))
+    labels_train = np.concatenate((labels_train, labels2, labels2))
+    re_weight = True
 
 data_1_val = np.vstack((data_1[idx_val], data_2[idx_val]))
 data_2_val = np.vstack((data_2[idx_val], data_1[idx_val]))
 labels_val = np.concatenate((labels[idx_val], labels[idx_val]))
 
 weight_val = np.ones(len(labels_val))
-if re_weight:
-    weight_val *= class1_weight
-    weight_val[labels_val == 0] = class0_weight
+# if re_weight:
+#     weight_val *= class1_weight
+#     weight_val[labels_val == 0] = class0_weight
 
 # all_sequences = sequences_1 + sequences_2 + test_sequences_1 + test_sequences_2
 # idf_dict = get_idf_dict(all_sequences)
