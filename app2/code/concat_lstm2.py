@@ -45,7 +45,7 @@ GENERATE_DATA_FILE = os.path.join(BASE_DIR, 'generate_data.csv')
 MAX_SEQUENCE_LENGTH = 30
 MAX_NB_WORDS = 200000
 EMBEDDING_DIM = 300
-VALIDATION_SPLIT = 0.1
+VALIDATION_SPLIT = 0.025
 
 num_lstm = 250
 num_dense = 250
@@ -207,9 +207,9 @@ perm = np.random.permutation(len(data_1))
 idx_train = perm[:int(len(data_1) * (1 - VALIDATION_SPLIT))]
 idx_val = perm[int(len(data_1) * (1 - VALIDATION_SPLIT)):]
 
-data_1_train = np.vstack((data_1[idx_train], data_2[idx_train]))
-data_2_train = np.vstack((data_2[idx_train], data_1[idx_train]))
-labels_train = np.concatenate((labels[idx_train], labels[idx_train]))
+data_1_train = np.vstack((data_1[idx_train], data_2[idx_train], data_3, data_4))
+data_2_train = np.vstack((data_2[idx_train], data_1[idx_train], data_4, data_3))
+labels_train = np.concatenate((labels[idx_train], labels[idx_train], labels2, labels2))
 
 data_1_val = np.vstack((data_1[idx_val], data_2[idx_val]))
 data_2_val = np.vstack((data_2[idx_val], data_1[idx_val]))
@@ -252,8 +252,8 @@ sequence_2_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_2 = embedding_layer(sequence_2_input)
 y1 = lstm_layer(embedded_sequences_2)
 
-# add_distance1 = add([x1, y1])
-add_distance1 = merge([x1, y1], mode=lambda x: K.abs(x[0] - x[1]), output_shape=lambda x: x[0])
+add_distance1 = add([x1, y1])
+# add_distance1 = merge([x1, y1], mode=lambda x: K.abs(x[0] - x[1]), output_shape=lambda x: x[0])
 mul_distance1 = multiply([x1, y1])
 merged = concatenate([add_distance1, mul_distance1])
 merged = Dropout(rate_drop_dense)(merged)
