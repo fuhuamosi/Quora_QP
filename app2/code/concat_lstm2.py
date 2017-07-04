@@ -24,6 +24,7 @@ from nltk.stem import SnowballStemmer
 
 from preprocess.data_helpers import get_idf_dict, get_extra_features, \
     get_question_freq, get_inter_dict
+from app2.code.helper import generate_samples
 
 """
 Single model may achieve LB scores at around 0.29+ ~ 0.30+
@@ -187,6 +188,7 @@ perm = np.random.permutation(len(data_1))
 idx_train = perm[:int(len(data_1) * (1 - VALIDATION_SPLIT))]
 idx_val = perm[int(len(data_1) * (1 - VALIDATION_SPLIT)):]
 
+texts_3, texts_4, labels2 = generate_samples(TRAIN_DATA_FILE, idx_train)
 
 data_1_train = np.vstack((data_1[idx_train]))
 data_2_train = np.vstack((data_2[idx_train]))
