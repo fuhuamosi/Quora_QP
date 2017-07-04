@@ -52,8 +52,8 @@ num_dense = 250
 rate_drop_lstm = 0.25
 rate_drop_dense = 0.25
 
-class0_weight = 1.382
-class1_weight = 0.680
+class0_weight = None
+class1_weight = None
 
 max_cnt = 10000000
 
@@ -189,15 +189,26 @@ idx_train = perm[:int(len(data_1) * (1 - VALIDATION_SPLIT))]
 idx_val = perm[int(len(data_1) * (1 - VALIDATION_SPLIT)):]
 
 texts_3, texts_4, labels2 = generate_samples(TRAIN_DATA_FILE, idx_train)
+print('Generate %s data from train file' % len(texts_3))
+sequences_3 = tokenizer.texts_to_sequences(texts_3)
+sequences_4 = tokenizer.texts_to_sequences(texts_4)
+data_3 = pad_sequences(sequences_3, maxlen=MAX_SEQUENCE_LENGTH, truncating='post')
+data_4 = pad_sequences(sequences_4, maxlen=MAX_SEQUENCE_LENGTH, truncating='post')
 
 data_1_train = np.vstack((data_1[idx_train]))
 data_2_train = np.vstack((data_2[idx_train]))
 labels_train = labels[idx_train]
 if add_data:
-    data_1_train = np.concatenate((data_1_train))
-    data_2_train = np.concatenate((data_2_train))
-    labels_train = np.concatenate((labels_train))
+    data_1_train = np.concatenate((data_1_train, data_3))
+    data_2_train = np.concatenate((data_2_train, data_4))
+    labels_train = np.concatenate((labels_train, labels2))
     re_weight = True
+    c1_weight = np.sum(labels[idx_train]) / len(labels[idx_train])
+    c0_weight = 1 - c1_weight
+    c1_weight_new = np.sum(labels_train) / len(labels_train)
+    c0_weight_new = 1 - c1_weight_new
+    class0_weight = c0_weight / c0_weight_new
+    class1_weight = c1_weight / c1_weight_new
 
 data_1_val = np.vstack((data_1[idx_val]))
 data_2_val = np.vstack((data_2[idx_val]))
