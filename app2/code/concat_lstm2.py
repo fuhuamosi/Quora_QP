@@ -45,7 +45,7 @@ GENERATE_DATA_FILE = os.path.join(BASE_DIR, 'generate_data.csv')
 MAX_SEQUENCE_LENGTH = 30
 MAX_NB_WORDS = 200000
 EMBEDDING_DIM = 300
-VALIDATION_SPLIT = 0.025
+VALIDATION_SPLIT = 0.1
 
 num_lstm = 250
 num_dense = 250
@@ -55,7 +55,7 @@ rate_drop_dense = 0.25
 class0_weight = 1.382
 class1_weight = 0.680
 
-max_cnt = 10000000
+max_cnt = 1000
 
 act = 'relu'
 re_weight = True  # whether to re-weight classes to fit the 17.5% share in test set
