@@ -49,8 +49,8 @@ VALIDATION_SPLIT = 0.1
 
 num_lstm = 250
 num_dense = 250
-rate_drop_lstm = 0.25
-rate_drop_dense = 0.25
+rate_drop_lstm = 0.5
+rate_drop_dense = 0.5
 
 class0_weight = None
 class1_weight = None
@@ -59,7 +59,7 @@ max_cnt = 10000000
 
 act = 'relu'
 re_weight = False
-add_data = False
+add_data = True
 
 STAMP = 'lstm_{:d}_{:d}_{:.2f}_{:.2f}'.format(num_lstm, num_dense,
                                               rate_drop_lstm, rate_drop_dense)
@@ -219,18 +219,18 @@ weight_val = np.ones(len(labels_val))
 #     weight_val *= class1_weight
 #     weight_val[labels_val == 0] = class0_weight
 
-# all_sequences = sequences_1 + sequences_2 + test_sequences_1 + test_sequences_2
-# idf_dict = get_idf_dict(all_sequences)
-# question_freq = get_question_freq(all_sequences)
-# inter_dict = get_inter_dict(sequences_1 + test_sequences_1, sequences_2 + test_sequences_2)
-#
-# train_features = get_extra_features(data_1_train.tolist(), data_2_train.tolist(), idf_dict,
-#                                     embedding_matrix, question_freq, inter_dict)
-# val_features = get_extra_features(data_1_val.tolist(), data_2_val.tolist(), idf_dict,
-#                                   embedding_matrix, question_freq, inter_dict)
+all_sequences = sequences_1 + sequences_2
+idf_dict = get_idf_dict(all_sequences)
+question_freq = get_question_freq(all_sequences)
+inter_dict = get_inter_dict(sequences_1, sequences_2)
+
+train_features = get_extra_features(data_1_train.tolist(), data_2_train.tolist(), idf_dict,
+                                    embedding_matrix, question_freq, inter_dict)
+val_features = get_extra_features(data_1_val.tolist(), data_2_val.tolist(), idf_dict,
+                                  embedding_matrix, question_freq, inter_dict)
 # test_features = get_extra_features(test_data_1.tolist(), test_data_2.tolist(), idf_dict,
 #                                    embedding_matrix, question_freq, inter_dict)
-# extra_feature_num = len(train_features[0])
+extra_feature_num = len(train_features[0])
 
 ########################################
 ## define the model structure
@@ -240,8 +240,8 @@ embedding_layer = Embedding(nb_words,
                             weights=[embedding_matrix],
                             input_length=MAX_SEQUENCE_LENGTH,
                             trainable=False)
-lstm_layer = Bidirectional(LSTM(num_lstm, dropout=rate_drop_lstm,
-                                recurrent_dropout=rate_drop_lstm))
+lstm_layer = LSTM(num_lstm, dropout=rate_drop_lstm,
+                  recurrent_dropout=rate_drop_lstm)
 
 sequence_1_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_1 = embedding_layer(sequence_1_input)
@@ -251,17 +251,30 @@ sequence_2_input = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32')
 embedded_sequences_2 = embedding_layer(sequence_2_input)
 y1 = lstm_layer(embedded_sequences_2)
 
+extra_features = Input(shape=(extra_feature_num,), dtype='float32')
+
+# merged = concatenate([x1, y1])
 add_distance1 = add([x1, y1])
-# add_distance1 = merge([x1, y1], mode=lambda x: K.abs(x[0] - x[1]), output_shape=lambda x: x[0])
 mul_distance1 = multiply([x1, y1])
-merged = concatenate([add_distance1, mul_distance1])
-merged = Dropout(rate_drop_dense)(merged)
+input0 = concatenate([add_distance1, mul_distance1])
+input1 = Dropout(rate_drop_dense)(input0)
+input1 = BatchNormalization()(input1)
+output1 = Dense(150, activation='relu')(input1)
+# add_distance2 = add([x2, y2])
+# mul_distance2 = multiply([x2, y2])
+# merged = concatenate([add_distance1, mul_distance1, add_distance2, mul_distance2])
+
+merged = Dropout(rate_drop_dense)(input0)
 merged = BatchNormalization()(merged)
+merged = concatenate([merged, extra_features])
 
 merged = Dense(num_dense, activation=act)(merged)
 merged = Dropout(rate_drop_dense)(merged)
 merged = BatchNormalization()(merged)
 
+output2 = Dense(150, activation='relu')(merged)
+merged = add([output1, output2])
+merged = BatchNormalization()(merged)
 preds = Dense(1, activation='sigmoid')(merged)
 
 ########################################
@@ -275,7 +288,7 @@ else:
 ########################################
 ## train the model
 ########################################
-model = Model(inputs=[sequence_1_input, sequence_2_input],
+model = Model(inputs=[sequence_1_input, sequence_2_input, extra_features],
               outputs=preds)
 model.compile(loss='binary_crossentropy',
               optimizer='nadam',
@@ -287,8 +300,8 @@ early_stopping = EarlyStopping(monitor='val_loss', patience=3)
 bst_model_path = STAMP + '.h5'
 model_checkpoint = ModelCheckpoint(bst_model_path, save_best_only=True, save_weights_only=True)
 
-hist = model.fit([data_1_train, data_2_train], labels_train,
-                 validation_data=([data_1_val, data_2_val], labels_val, weight_val),
+hist = model.fit([data_1_train, data_2_train, train_features], labels_train,
+                 validation_data=([data_1_val, data_2_val, val_features], labels_val, weight_val),
                  epochs=200, batch_size=1024, shuffle=True,
                  class_weight=class_weight, callbacks=[early_stopping, model_checkpoint])
 
