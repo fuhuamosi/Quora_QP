@@ -49,7 +49,7 @@ VALIDATION_SPLIT = 0.1
 
 num_lstm = 250
 num_dense = 250
-rate_drop_lstm = 0.5
+rate_drop_lstm = 0.2
 rate_drop_dense = 0.5
 
 class0_weight = None
@@ -59,7 +59,7 @@ max_cnt = 10000000
 
 act = 'relu'
 re_weight = False
-add_data = True
+add_data = False
 
 STAMP = 'lstm_{:d}_{:d}_{:.2f}_{:.2f}'.format(num_lstm, num_dense,
                                               rate_drop_lstm, rate_drop_dense)
