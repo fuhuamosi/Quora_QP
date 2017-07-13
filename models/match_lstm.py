@@ -42,7 +42,7 @@ class MatchLstm:
 
         self._batch_size = tf.shape(self.sent1)[0]
 
-        self.lr = tf.get_variable(shape=[], dtype=tf.float32, trainable=False,
+        self.lr = tf.get_variable(shape=[], dtype=tf.float32, trainable=True,
                                   initializer=tf.constant_initializer(self._initial_lr), name='lr')
         self.new_lr = tf.placeholder(shape=[], dtype=tf.float32,
                                      name='new_lr')
