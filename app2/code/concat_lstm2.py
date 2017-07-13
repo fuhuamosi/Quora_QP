@@ -79,7 +79,7 @@ print('Found %s word vectors of word2vec' % len(word2vec.vocab))
 print('Processing text dataset')
 
 
-# The function "text_to_wordlist" is from
+# The function "text_to_word_list" is from
 # https://www.kaggle.com/currie32/quora-question-pairs/the-importance-of-cleaning-text
 def text_to_word_list(text, remove_stopwords=False, stem_words=False):
     # Clean the text, with the option to remove stopwords and to stem words.
