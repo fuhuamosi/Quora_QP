@@ -63,7 +63,7 @@ STAMP = 'lstm_{:d}_{:d}_{:.2f}_{:.2f}'.format(num_lstm, num_dense,
                                               rate_drop_lstm, rate_drop_dense)
 
 ########################################
-## index word vectors
+# index word vectors
 ########################################
 print('Indexing word vectors')
 
